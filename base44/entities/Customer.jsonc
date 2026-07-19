@@ -1,0 +1,13 @@
+{
+  "name": "Customer",
+  "type": "object",
+  "properties": {
+    "phone": { "type": "string" },
+    "display_name": { "type": "string" },
+    "language": { "type": "string", "enum": ["es", "en", "de", "fr"] },
+    "order_count": { "type": "number", "default": 0 },
+    "last_order_at": { "type": "string" },
+    "marketing_consent": { "type": "boolean", "default": false }
+  },
+  "required": ["phone"]
+}

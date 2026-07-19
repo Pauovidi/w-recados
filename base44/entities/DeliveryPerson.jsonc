@@ -1,0 +1,31 @@
+{
+  "name": "DeliveryPerson",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nombre del repartidor"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Tel\u00e9fono del repartidor"
+    },
+    "zone": {
+      "type": "string",
+      "description": "Zona de reparto"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Estado activo/inactivo"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notas internas"
+    }
+  },
+  "required": [
+    "name",
+    "phone"
+  ]
+}

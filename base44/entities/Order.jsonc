@@ -1,0 +1,58 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "order_number": { "type": "string" },
+    "public_tracking_token": { "type": "string" },
+    "payment_token": { "type": "string" },
+    "customer_id": { "type": "string" },
+    "service_type": {
+      "type": "string",
+      "enum": ["supermercado", "farmacia", "compras_personales", "recados", "transporte_productos"]
+    },
+    "original_text": { "type": "string" },
+    "translated_text": { "type": "string" },
+    "translation_mode": { "type": "string", "enum": ["original", "base44_ai", "manual", "pending"] },
+    "original_language": { "type": "string" },
+    "client_language": { "type": "string", "enum": ["es", "en", "de", "fr"] },
+    "delivery_address": { "type": "string" },
+    "client_phone": { "type": "string" },
+    "client_name": { "type": "string" },
+    "preferred_schedule": { "type": "string" },
+    "client_notes": { "type": "string" },
+    "attachment_urls": { "type": "array", "items": { "type": "string" } },
+    "internal_notes": { "type": "string" },
+    "order_status": {
+      "type": "string",
+      "enum": ["nuevo", "presupuestado", "pendiente_pago", "pagado", "asignado", "recogido", "en_camino", "entregado", "cancelado"],
+      "default": "nuevo"
+    },
+    "assigned_delivery": { "type": "string" },
+    "assigned_delivery_name": { "type": "string" },
+    "product_cost": { "type": "number", "default": 0 },
+    "transport_cost": { "type": "number", "default": 0 },
+    "service_cost": { "type": "number", "default": 0 },
+    "total": { "type": "number", "default": 0 },
+    "payment_status": {
+      "type": "string",
+      "enum": ["sin_presupuestar", "pendiente", "pagado", "reembolsado"],
+      "default": "sin_presupuestar"
+    },
+    "payment_link": { "type": "string" },
+    "stripe_checkout_session_id": { "type": "string" },
+    "stripe_payment_intent_id": { "type": "string" },
+    "paid_at": { "type": "string" },
+    "status_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "at": { "type": "string" },
+          "actor": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["service_type", "original_text", "delivery_address", "client_phone", "client_language"]
+}

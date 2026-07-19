@@ -1,0 +1,12 @@
+{
+  "name": "w-recados",
+  "description": "Gestión multilingüe de recados, pagos, reparto y conversaciones WhatsApp",
+  "entitiesDir": "./entities",
+  "functionsDir": "./functions",
+  "site": {
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "serveCommand": "npm run dev",
+    "outputDirectory": "./dist"
+  }
+}

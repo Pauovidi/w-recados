@@ -1,0 +1,15 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "conversation_id": { "type": "string" },
+    "order_id": { "type": "string" },
+    "provider_sid": { "type": "string" },
+    "direction": { "type": "string", "enum": ["inbound", "outbound", "system"] },
+    "body": { "type": "string" },
+    "status": { "type": "string" },
+    "media_urls": { "type": "array", "items": { "type": "string" } },
+    "sent_at": { "type": "string" }
+  },
+  "required": ["conversation_id", "direction", "body"]
+}
