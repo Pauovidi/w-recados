@@ -2,7 +2,7 @@ const now = Date.now();
 const ago = (minutes) => new Date(now - minutes * 60_000).toISOString();
 const after = (minutes) => new Date(now + minutes * 60_000).toISOString();
 
-export const DEMO_VERSION = 4;
+export const DEMO_VERSION = 5;
 
 export const initialDemoState = {
   version: DEMO_VERSION,
@@ -23,6 +23,7 @@ export const initialDemoState = {
     },
   ],
   customers: [
+    { id: 'cli_lucia', phone: '+34611000333', display_name: 'Lucía · prueba WhatsApp', language: 'es', order_count: 0, last_order_at: '' },
     { id: 'cli_anna', phone: '+447700900321', display_name: 'Anna Müller', language: 'de', order_count: 1, last_order_at: ago(18) },
     { id: 'cli_james', phone: '+447700900456', display_name: 'James Wilson', language: 'en', order_count: 1, last_order_at: ago(72) },
     { id: 'cli_marie', phone: '+33612030405', display_name: 'Marie Laurent', language: 'fr', order_count: 1, last_order_at: ago(145) },
@@ -81,6 +82,21 @@ export const initialDemoState = {
     },
   ],
   conversations: [
+    {
+      id: 'conv_lucia', customer_id: 'cli_lucia', phone: '+34611000333', display_name: 'Lucía · prueba WhatsApp', language: 'es',
+      order_ids: [], unread_count: 0, updated_at: ago(2), service_window_expires_at: after(1438),
+      automation_enabled: true, intake_status: 'idle', intake_draft: {}, intake_missing_fields: [],
+      messages: [
+        {
+          id: 'msg_lucia_help',
+          direction: 'system',
+          body: 'Contacto de prueba: usa “Simular mensaje entrante” para enviar una comanda como cliente.',
+          at: ago(2),
+          status: 'recorded',
+          provider: 'system',
+        },
+      ],
+    },
     {
       id: 'conv_anna', customer_id: 'cli_anna', phone: '+447700900321', display_name: 'Anna Müller', language: 'de',
       order_ids: ['ped_1003'], unread_count: 1, updated_at: ago(18), service_window_expires_at: after(1422),

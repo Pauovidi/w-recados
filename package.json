@@ -9,8 +9,10 @@
     "build:vite": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
+    "check:base44": "node scripts/check-base44-syntax.mjs",
+    "test:intake": "node scripts/test-whatsapp-intake.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
-    "check": "npm run lint && npm run typecheck && npm run build",
+    "check": "npm run lint && npm run typecheck && npm run check:base44 && npm run test:intake && npm run build",
     "preview": "vite preview --outDir dist/client"
   },
   "dependencies": {

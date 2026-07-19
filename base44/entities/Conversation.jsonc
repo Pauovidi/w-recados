@@ -9,7 +9,26 @@
     "order_ids": { "type": "array", "items": { "type": "string" } },
     "unread_count": { "type": "number", "default": 0 },
     "last_message_at": { "type": "string" },
-    "service_window_expires_at": { "type": "string" }
+    "service_window_expires_at": { "type": "string" },
+    "automation_enabled": { "type": "boolean", "default": true },
+    "intake_status": {
+      "type": "string",
+      "enum": ["idle", "collecting", "created", "needs_admin"],
+      "default": "idle"
+    },
+    "intake_draft": {
+      "type": "object",
+      "properties": {
+        "service_type": { "type": "string" },
+        "original_text": { "type": "string" },
+        "translated_text": { "type": "string" },
+        "delivery_address": { "type": "string" },
+        "preferred_schedule": { "type": "string" },
+        "client_notes": { "type": "string" }
+      }
+    },
+    "intake_missing_fields": { "type": "array", "items": { "type": "string" } },
+    "last_intake_order_id": { "type": "string" }
   },
   "required": ["phone"]
 }

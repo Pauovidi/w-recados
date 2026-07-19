@@ -1,6 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { DEMO_VERSION, initialDemoState } from '@/lib/demo-data';
 import { makeId, normalizePhone, translateForDemo } from '@/lib/domain';
+import {
+  getWhatsAppIntakeConfirmation,
+  processDemoWhatsAppIntake,
+} from '@/lib/whatsapp-intake';
 
 const STORAGE_KEY = 'w-recados-demo-v4';
 const DemoStoreContext = createContext(null);
@@ -13,7 +17,23 @@ function loadState() {
   if (typeof window === 'undefined') return cloneInitialState();
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
-    return parsed?.version === DEMO_VERSION ? parsed : cloneInitialState();
+    if (parsed?.version === DEMO_VERSION) return parsed;
+    if (parsed?.version === 4) {
+      const initial = cloneInitialState();
+      const demoCustomer = initial.customers.find((customer) => customer.id === 'cli_lucia');
+      const demoConversation = initial.conversations.find((conversation) => conversation.id === 'conv_lucia');
+      return {
+        ...parsed,
+        version: DEMO_VERSION,
+        customers: parsed.customers?.some((customer) => customer.id === 'cli_lucia')
+          ? parsed.customers
+          : [demoCustomer, ...(parsed.customers || [])],
+        conversations: parsed.conversations?.some((conversation) => conversation.id === 'conv_lucia')
+          ? parsed.conversations
+          : [demoConversation, ...(parsed.conversations || [])],
+      };
+    }
+    return cloneInitialState();
   } catch {
     return cloneInitialState();
   }
@@ -144,6 +164,148 @@ export function DemoStoreProvider({ children }) {
     });
 
     return createdOrder || { id };
+  }, []);
+
+  const receiveWhatsAppMessage = useCallback((conversationId, body) => {
+    const incomingBody = body.trim();
+    if (!incomingBody) return;
+
+    const receivedAt = new Date().toISOString();
+    const serviceWindowExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    setState((current) => {
+      const conversation = current.conversations.find((item) => item.id === conversationId);
+      if (!conversation) return current;
+
+      const intake = processDemoWhatsAppIntake({ conversation, message: incomingBody });
+      const inboundMessage = {
+        id: makeId('msg'),
+        direction: 'inbound',
+        body: incomingBody,
+        at: receivedAt,
+        status: 'received',
+        provider: 'twilio_demo',
+      };
+      const automationMessages = [];
+      let orders = current.orders;
+      let customers = current.customers;
+      let orderIds = conversation.order_ids || [];
+      let intakeStatus = 'collecting';
+      let lastIntakeOrderId = conversation.last_intake_order_id || '';
+
+      if (intake.complete) {
+        const orderId = makeId('ped');
+        const orderNumber = nextOrderNumber(current.orders);
+        const paymentToken = makeId('pay');
+        const customer = current.customers.find((item) => item.id === conversation.customer_id)
+          || current.customers.find((item) => item.phone === conversation.phone);
+        const customerId = customer?.id || conversation.customer_id || makeId('cli');
+        const originalText = intake.draft.original_text;
+        const order = {
+          id: orderId,
+          order_number: orderNumber,
+          public_tracking_token: makeId('track'),
+          payment_token: paymentToken,
+          customer_id: customerId,
+          service_type: intake.draft.service_type || 'recados',
+          original_text: originalText,
+          translated_text: translateForDemo(originalText, intake.language),
+          translation_mode: intake.language === 'es' ? 'original' : 'demo',
+          original_language: intake.language,
+          client_language: intake.language,
+          delivery_address: intake.draft.delivery_address,
+          client_phone: conversation.phone,
+          client_name: conversation.display_name,
+          preferred_schedule: intake.draft.preferred_schedule,
+          client_notes: intake.draft.client_notes || '',
+          attachments: [],
+          order_status: 'nuevo',
+          payment_status: 'sin_presupuestar',
+          assigned_delivery: '',
+          assigned_delivery_name: '',
+          product_cost: 0,
+          transport_cost: 0,
+          service_cost: 0,
+          total: 0,
+          payment_link: '',
+          internal_notes: '',
+          created_date: receivedAt,
+          updated_date: receivedAt,
+          status_history: [{ status: 'nuevo', at: receivedAt, actor: 'WhatsApp automático' }],
+        };
+
+        orders = [order, ...current.orders];
+        orderIds = [orderId, ...orderIds.filter((id) => id !== orderId)];
+        lastIntakeOrderId = orderId;
+        intakeStatus = 'created';
+
+        customers = customer
+          ? current.customers.map((item) => item.id === customer.id ? {
+              ...item,
+              language: intake.language,
+              last_order_at: receivedAt,
+              order_count: Number(item.order_count || 0) + 1,
+            } : item)
+          : [{
+              id: customerId,
+              phone: conversation.phone,
+              display_name: conversation.display_name || `Cliente ${conversation.phone.slice(-4)}`,
+              language: intake.language,
+              last_order_at: receivedAt,
+              order_count: 1,
+            }, ...current.customers];
+
+        automationMessages.push(
+          {
+            id: makeId('msg'),
+            direction: 'system',
+            body: `Pedido #${orderNumber} creado automáticamente desde WhatsApp.`,
+            at: receivedAt,
+            status: 'recorded',
+            provider: 'system',
+          },
+          {
+            id: makeId('msg'),
+            direction: 'outbound',
+            body: getWhatsAppIntakeConfirmation(intake.language, orderNumber),
+            at: receivedAt,
+            status: 'simulated',
+            provider: 'twilio_demo',
+            automation: true,
+          },
+        );
+      } else {
+        automationMessages.push({
+          id: makeId('msg'),
+          direction: 'outbound',
+          body: intake.reply,
+          at: receivedAt,
+          status: 'simulated',
+          provider: 'twilio_demo',
+          automation: true,
+        });
+      }
+
+      return {
+        ...current,
+        orders,
+        customers,
+        conversations: current.conversations.map((item) => item.id === conversationId ? {
+          ...item,
+          language: intake.language,
+          order_ids: orderIds,
+          unread_count: Number(item.unread_count || 0) + 1,
+          updated_at: receivedAt,
+          service_window_expires_at: serviceWindowExpiresAt,
+          automation_enabled: true,
+          intake_status: intakeStatus,
+          intake_draft: intake.draft,
+          intake_missing_fields: intake.missingFields,
+          last_intake_order_id: lastIntakeOrderId,
+          messages: [...(item.messages || []), inboundMessage, ...automationMessages],
+        } : item),
+      };
+    });
   }, []);
 
   const updateOrder = useCallback((id, changes, actor = 'Administración') => {
@@ -324,13 +486,14 @@ export function DemoStoreProvider({ children }) {
     quoteOrder,
     markDemoPaid,
     sendMessage,
+    receiveWhatsAppMessage,
     markConversationRead,
     setActiveCourier,
     createCourier,
     updateCourier,
     deactivateCourier,
     resetDemo,
-  }), [state, createOrder, updateOrder, assignCourier, quoteOrder, markDemoPaid, sendMessage, markConversationRead, setActiveCourier, createCourier, updateCourier, deactivateCourier, resetDemo]);
+  }), [state, createOrder, updateOrder, assignCourier, quoteOrder, markDemoPaid, sendMessage, receiveWhatsAppMessage, markConversationRead, setActiveCourier, createCourier, updateCourier, deactivateCourier, resetDemo]);
 
   return <DemoStoreContext.Provider value={value}>{children}</DemoStoreContext.Provider>;
 }

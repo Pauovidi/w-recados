@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  Bot,
   CheckCheck,
   Clock3,
   Globe2,
@@ -11,6 +12,7 @@ import {
   Search,
   Send,
   ShoppingBag,
+  Smartphone,
 } from 'lucide-react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -53,9 +55,47 @@ function getLastMessage(conversation) {
 
 function getMessagePreview(message) {
   if (!message) return 'Sin mensajes todavía';
-  if (message.direction === 'outbound') return `Tú: ${message.body}`;
+  if (message.direction === 'outbound') return `${message.automation ? 'Asistente' : 'Tú'}: ${message.body}`;
   if (message.direction === 'system') return `Sistema: ${message.body}`;
   return message.body;
+}
+
+const intakeFieldLabels = {
+  original_text: 'lista o recado',
+  delivery_address: 'dirección de entrega',
+  preferred_schedule: 'horario preferido',
+};
+
+function getIntakeStatus(conversation) {
+  if (conversation?.intake_status === 'collecting') {
+    const missing = (conversation.intake_missing_fields || [])
+      .map((field) => intakeFieldLabels[field] || field)
+      .join(' y ');
+    return {
+      label: 'Recogiendo datos',
+      description: missing ? `Falta: ${missing}.` : 'Completando la solicitud.',
+      tone: 'border-amber-200 bg-amber-50 text-amber-900',
+    };
+  }
+  if (conversation?.intake_status === 'created') {
+    return {
+      label: 'Pedido creado',
+      description: 'La última comanda se convirtió automáticamente en un pedido.',
+      tone: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    };
+  }
+  if (conversation?.intake_status === 'needs_admin') {
+    return {
+      label: 'Revisión necesaria',
+      description: 'El asistente ha derivado esta conversación a Administración.',
+      tone: 'border-rose-200 bg-rose-50 text-rose-900',
+    };
+  }
+  return {
+    label: 'Preparado',
+    description: 'Reconoce el teléfono y comienza una comanda cuando el cliente escribe.',
+    tone: 'border-violet-200 bg-violet-50 text-violet-900',
+  };
 }
 
 function getDeliveryLabel(status) {
@@ -71,11 +111,13 @@ export default function Conversations() {
     conversations = [],
     orders = [],
     sendMessage,
+    receiveWhatsAppMessage,
     markConversationRead,
   } = useDemoStore();
   const [search, setSearch] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState(searchParams.get('chat'));
   const [draft, setDraft] = useState('');
+  const [incomingDraft, setIncomingDraft] = useState('');
   const messagesEndRef = useRef(null);
 
   const orderedConversations = useMemo(
@@ -129,6 +171,7 @@ export default function Conversations() {
     selectedConversation?.service_window_expires_at
       && toTimestamp(selectedConversation.service_window_expires_at) > Date.now(),
   );
+  const intakeStatus = getIntakeStatus(selectedConversation);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'end' });
@@ -142,7 +185,10 @@ export default function Conversations() {
   }, [selectedConversation, selectedConversationId]);
 
   const handleSelectConversation = (conversationId) => {
-    if (conversationId !== selectedConversationId) setDraft('');
+    if (conversationId !== selectedConversationId) {
+      setDraft('');
+      setIncomingDraft('');
+    }
     setSelectedConversationId(conversationId);
     markConversationRead(conversationId);
   };
@@ -150,6 +196,7 @@ export default function Conversations() {
   const handleBackToInbox = () => {
     setSelectedConversationId(null);
     setDraft('');
+    setIncomingDraft('');
   };
 
   const handleSend = (event) => {
@@ -166,6 +213,14 @@ export default function Conversations() {
     if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
     event.preventDefault();
     event.currentTarget.form?.requestSubmit();
+  };
+
+  const handleIncomingMessage = (event) => {
+    event.preventDefault();
+    const body = incomingDraft.trim();
+    if (!selectedConversation || !body) return;
+    receiveWhatsAppMessage(selectedConversation.id, body);
+    setIncomingDraft('');
   };
 
   return (
@@ -353,6 +408,21 @@ export default function Conversations() {
                   )}
                 </div>
 
+                <div className={`flex items-start gap-3 border-b px-4 py-3 sm:px-5 ${intakeStatus.tone}`}>
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/70">
+                    <Bot className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold">Captación automática</p>
+                      <Badge variant="outline" className="rounded-full border-current/20 bg-white/60 text-[10px]">
+                        {intakeStatus.label}
+                      </Badge>
+                    </div>
+                    <p className="mt-0.5 text-xs leading-5 opacity-80">{intakeStatus.description}</p>
+                  </div>
+                </div>
+
                 <ScrollArea className="min-h-0 flex-1 bg-[#efeae2]">
                   <div className="min-h-full space-y-3 px-3 py-5 sm:px-6">
                     {selectedMessages.length === 0 ? (
@@ -388,6 +458,11 @@ export default function Conversations() {
                               }`}
                             >
                               <p className="whitespace-pre-wrap break-words text-sm leading-5">{message.body}</p>
+                              {message.automation && (
+                                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-white/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-700">
+                                  <Bot className="h-3 w-3" /> Automático
+                                </span>
+                              )}
                               <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-slate-500">
                                 <span>{formatDateTime(message.at)}</span>
                                 {isOutbound && <CheckCheck className="h-3.5 w-3.5 text-sky-600" />}
@@ -401,6 +476,35 @@ export default function Conversations() {
                     <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
+
+                <form onSubmit={handleIncomingMessage} className="border-t border-violet-200 bg-violet-50/90 p-3 sm:px-4">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-violet-900">
+                    <Smartphone className="h-4 w-4" />
+                    Simular mensaje entrante del cliente
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <Textarea
+                      value={incomingDraft}
+                      onChange={(event) => setIncomingDraft(event.target.value)}
+                      rows={1}
+                      maxLength={4000}
+                      data-testid="whatsapp-incoming-input"
+                      placeholder="Ej.: Necesito agua, leche y crema solar"
+                      aria-label="Mensaje entrante de WhatsApp simulado"
+                      className="min-h-11 max-h-28 resize-y rounded-2xl border-violet-200 bg-white px-4 py-2.5"
+                    />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      disabled={!incomingDraft.trim()}
+                      data-testid="whatsapp-incoming-submit"
+                      className="h-11 shrink-0 rounded-2xl border-violet-300 bg-white text-violet-800 hover:bg-violet-100"
+                    >
+                      <Bot className="h-4 w-4" />
+                      <span className="hidden sm:inline">Recibir</span>
+                    </Button>
+                  </div>
+                </form>
 
                 <form onSubmit={handleSend} className="border-t border-border bg-card p-3 sm:p-4">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">

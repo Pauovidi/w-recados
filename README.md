@@ -16,6 +16,15 @@ La configuración predeterminada usa un almacén local del navegador con datos f
 
 El selector inferior permite saltar entre perfiles y restaurar los datos iniciales. No introduzcas datos personales reales en este modo: el contenido se guarda únicamente en `localStorage` y no se sincroniza entre dispositivos.
 
+### Probar una comanda recibida por WhatsApp
+
+1. Abre `/admin/conversaciones` y selecciona **Lucía · prueba WhatsApp**.
+2. Usa **Simular mensaje entrante del cliente** para escribir qué necesita.
+3. El asistente pregunta, uno a uno, por la dirección y el horario que falten.
+4. Cuando dispone de lista, dirección y horario, crea el pedido y lo vincula automáticamente a la conversación.
+
+El teléfono de WhatsApp identifica al cliente. El nombre procede del perfil si está disponible y el idioma se detecta o reutiliza del contacto.
+
 ## Ejecutar en local
 
 Requisitos: Node.js 20 o superior.
@@ -42,7 +51,7 @@ resuelven hacia `index.html`, por lo que enlaces directos como
 
 - `createPublicOrder`: valida la solicitud anónima, reconoce el teléfono y traduce al español mediante la integración de Base44.
 - `createStripeCheckout` y `stripeWebhook`: generan Stripe Checkout en servidor y confirman el pago por webhook firmado.
-- `twilioInbound`, `sendWhatsApp` y `twilioStatus`: reciben, envían y actualizan estados de mensajes de WhatsApp verificando las firmas de Twilio.
+- `twilioInbound`, `sendWhatsApp` y `twilioStatus`: reciben, envían y actualizan estados de mensajes de WhatsApp verificando las firmas de Twilio. El webhook entrante reconoce al cliente por teléfono, extrae los campos del pedido con IA, pregunta mediante TwiML por los datos ausentes y crea el pedido cuando la comanda está completa.
 
 Las claves de Stripe y Twilio deben configurarse como secretos del backend. Nunca deben exponerse en variables `VITE_*` ni subirse al repositorio. Consulta `.env.example` para ver los nombres previstos.
 
