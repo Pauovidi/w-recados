@@ -31,6 +31,11 @@ Validación completa:
 npm run check
 ```
 
+La compilación de producción mantiene el front como una SPA de Vite y añade la
+entrada de servidor mínima que exige OpenAI Sites. Las rutas internas se
+resuelven hacia `index.html`, por lo que enlaces directos como
+`/admin/conversaciones` o `/repartidor` funcionan al recargar.
+
 ## Backend preparado para Base44
 
 `base44/entities` define pedidos, clientes identificados por teléfono, repartidores, conversaciones y mensajes. `base44/functions` incluye:
