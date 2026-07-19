@@ -220,6 +220,7 @@ export default function Conversations() {
     const body = incomingDraft.trim();
     if (!selectedConversation || !body) return;
     receiveWhatsAppMessage(selectedConversation.id, body);
+    markConversationRead(selectedConversation.id);
     setIncomingDraft('');
   };
 
