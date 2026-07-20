@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Clock3, Copy, CreditCard, ExternalLink, FileText, Globe2,
-  History, MapPin, MessageCircle, PackageCheck, Phone, Save, Truck,
+  ArrowLeft, Boxes, Building2, Clock3, Copy, CreditCard, ExternalLink, FileText, Globe2,
+  History, Mail, MapPin, MessageCircle, PackageCheck, Phone, Save, Send, Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,19 +15,28 @@ import OrderStatusBadge from '@/components/admin/OrderStatusBadge';
 import PaymentStatusBadge from '@/components/admin/PaymentStatusBadge';
 import { useDemoStore } from '@/lib/DemoStore';
 import {
-  formatCurrency, formatDateTime, LANGUAGE_LABELS, normalizePhone, ORDER_STATUSES, SERVICE_LABELS,
+  formatCurrency, formatDateTime, LANGUAGE_LABELS, normalizePhone, ORDER_STATUSES, PAYMENT_METHODS, SERVICE_LABELS,
 } from '@/lib/domain';
 
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders, couriers, conversations, updateOrder, assignCourier, quoteOrder } = useDemoStore();
+  const {
+    orders, couriers, businesses = [], packages = [], conversations, updateOrder, assignCourier,
+    assignBusinesses, assignPackages, quoteOrder, markManualPaid,
+  } = useDemoStore();
   const order = orders.find((item) => item.id === id);
   const [form, setForm] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [businessIds, setBusinessIds] = useState([]);
+  const [packageIds, setPackageIds] = useState([]);
 
   useEffect(() => {
-    if (order) setForm({ ...order });
+    if (order) {
+      setForm({ ...order, payment_method: order.payment_method || 'stripe' });
+      setBusinessIds((order.business_assignments || []).map((assignment) => assignment.business_id));
+      setPackageIds(order.package_ids || []);
+    }
   }, [order]);
 
   const conversation = useMemo(
@@ -52,6 +62,7 @@ export default function OrderDetail() {
       product_cost: Number(form.product_cost || 0),
       transport_cost: Number(form.transport_cost || 0),
       service_cost: Number(form.service_cost || 0),
+      payment_method: form.payment_method || 'stripe',
     });
   };
 
@@ -61,10 +72,39 @@ export default function OrderDetail() {
       product_cost: form.product_cost,
       transport_cost: form.transport_cost,
       service_cost: form.service_cost,
-    });
+    }, form.payment_method || 'stripe');
+  };
+
+  const registerManualPayment = () => {
+    save();
+    markManualPaid(order.id, form.payment_method);
   };
 
   const total = Number(form.product_cost || 0) + Number(form.transport_cost || 0) + Number(form.service_cost || 0);
+  const paymentMethod = form.payment_method || 'stripe';
+  const paymentMethodLabel = PAYMENT_METHODS.find((method) => method.value === paymentMethod)?.label || paymentMethod;
+  const activeBusinesses = businesses.filter((business) => business.is_active || businessIds.includes(business.id));
+  const activePackages = packages.filter((productPackage) => productPackage.is_active || packageIds.includes(productPackage.id));
+  const assignedBusinesses = order.business_assignments || [];
+  const assignedPackages = packages.filter((productPackage) => packageIds.includes(productPackage.id));
+  const businessMessage = [
+    `Pedido #${order.order_number}`,
+    '',
+    'Lista en español:',
+    order.translated_text || order.original_text,
+    '',
+    `Entrega: ${order.delivery_address || 'Sin dirección indicada'}`,
+    order.client_notes ? `Notas del cliente: ${order.client_notes}` : '',
+  ].filter(Boolean).join('\n');
+  const toggleId = (ids, setIds, targetId, checked) => setIds(checked
+    ? [...new Set([...ids, targetId])]
+    : ids.filter((item) => item !== targetId));
+  const getBusinessWhatsAppUrl = (assignment) => assignment.business_phone
+    ? `https://wa.me/${normalizePhone(assignment.business_phone).replace(/\D/g, '')}?text=${encodeURIComponent(businessMessage)}`
+    : '';
+  const getBusinessEmailUrl = (assignment) => assignment.business_email
+    ? `mailto:${assignment.business_email}?subject=${encodeURIComponent(`Pedido #${order.order_number}`)}&body=${encodeURIComponent(businessMessage)}`
+    : '';
   const whatsappUrl = `https://wa.me/${normalizePhone(order.client_phone).replace(/\D/g, '')}?text=${encodeURIComponent(`Hola, te contactamos por tu pedido #${order.order_number}.`)}`;
 
   const copyPaymentLink = async () => {
@@ -147,6 +187,25 @@ export default function OrderDetail() {
                 <Label>Notas internas</Label>
                 <Textarea value={form.internal_notes || ''} onChange={(event) => setField('internal_notes', event.target.value)} placeholder="Aclaraciones, sustituciones, compras en distintos establecimientos…" className="min-h-28 rounded-2xl" />
               </div>
+
+              <div className="rounded-3xl border border-violet-200 bg-violet-50/60 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="flex items-center gap-2 text-sm font-bold text-violet-950"><Boxes className="h-4 w-4" /> Paquetes de referencia</p>
+                    <p className="mt-1 text-xs leading-5 text-violet-800">Opcionales y solo internos: no sustituyen la lista libre del cliente.</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="rounded-full" onClick={() => assignPackages(order.id, packageIds)}>Guardar paquetes</Button>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {activePackages.length === 0 ? <p className="text-sm text-muted-foreground">No hay paquetes activos.</p> : activePackages.map((productPackage) => (
+                    <label key={productPackage.id} className="flex cursor-pointer items-start gap-3 rounded-2xl border border-violet-100 bg-white p-3">
+                      <Checkbox checked={packageIds.includes(productPackage.id)} onCheckedChange={(checked) => toggleId(packageIds, setPackageIds, productPackage.id, checked)} />
+                      <span className="min-w-0"><span className="block text-sm font-semibold">{productPackage.name}</span><span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{productPackage.contents}</span></span>
+                    </label>
+                  ))}
+                </div>
+                {assignedPackages.length > 0 && <p className="mt-3 text-xs font-medium text-violet-800">Aplicados: {assignedPackages.map((productPackage) => productPackage.name).join(', ')}.</p>}
+              </div>
             </CardContent>
           </Card>
 
@@ -196,19 +255,46 @@ export default function OrderDetail() {
             </CardContent>
           </Card>
 
+          <Card className="rounded-[2rem] border-emerald-100">
+            <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5 text-emerald-600" /> Negocios asignados</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-6 text-muted-foreground">El cliente no ve esta asignación. Puedes enviar a cada negocio la lista traducida, entrega y notas.</p>
+              <div className="space-y-2">
+                {activeBusinesses.length === 0 ? <p className="text-sm text-muted-foreground">No hay negocios activos.</p> : activeBusinesses.map((business) => (
+                  <label key={business.id} className="flex cursor-pointer items-start gap-3 rounded-2xl border p-3">
+                    <Checkbox checked={businessIds.includes(business.id)} onCheckedChange={(checked) => toggleId(businessIds, setBusinessIds, business.id, checked)} />
+                    <span className="min-w-0"><span className="block text-sm font-semibold">{business.name}</span><span className="mt-0.5 block text-xs text-muted-foreground">{business.category || 'Sin categoría'} · {business.preferred_channel === 'email' ? 'Email' : business.preferred_channel === 'both' ? 'WhatsApp y email' : 'WhatsApp'}</span></span>
+                  </label>
+                ))}
+              </div>
+              <Button data-testid="business-assignment-save" variant="outline" className="h-11 w-full rounded-full" onClick={() => assignBusinesses(order.id, businessIds)}><Save className="h-4 w-4" /> Guardar asignación</Button>
+              {assignedBusinesses.length > 0 && <div className="space-y-2 border-t pt-4">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">Enviar pedido en español</p>
+                {assignedBusinesses.map((assignment) => {
+                  const whatsappHref = getBusinessWhatsAppUrl(assignment);
+                  const emailHref = getBusinessEmailUrl(assignment);
+                  return <div key={assignment.business_id} className="rounded-2xl bg-emerald-50 p-3"><p className="text-sm font-semibold text-emerald-950">{assignment.business_name}</p><div className="mt-2 flex flex-wrap gap-2">{whatsappHref && assignment.preferred_channel !== 'email' && <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 bg-white"><a href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5 text-emerald-600" /> WhatsApp</a></Button>}{emailHref && assignment.preferred_channel !== 'whatsapp' && <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 bg-white"><a href={emailHref}><Mail className="h-3.5 w-3.5" /> Email</a></Button>}{!whatsappHref && !emailHref && <span className="text-xs text-muted-foreground">Sin canal de contacto.</span>}</div></div>;
+                })}
+              </div>}
+            </CardContent>
+          </Card>
+
           <Card className="rounded-[2rem] border-blue-100">
             <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" /> Presupuesto y pago</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <MoneyInput label="Compras" value={form.product_cost} onChange={(value) => setField('product_cost', value)} />
               <MoneyInput label="Transporte" value={form.transport_cost} onChange={(value) => setField('transport_cost', value)} />
               <MoneyInput label="Servicio" value={form.service_cost} onChange={(value) => setField('service_cost', value)} />
+              <div className="space-y-2"><Label>Método de pago</Label><Select value={paymentMethod} onValueChange={(value) => setField('payment_method', value)}><SelectTrigger data-testid="payment-method" className="h-12 rounded-2xl"><SelectValue /></SelectTrigger><SelectContent>{PAYMENT_METHODS.map((method) => <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>)}</SelectContent></Select></div>
               <div className="flex items-center justify-between rounded-2xl bg-slate-950 p-4 text-white">
                 <span className="text-sm font-semibold">Total</span>
                 <strong className="text-2xl">{formatCurrency(total)}</strong>
               </div>
               <Button className="h-12 w-full rounded-full" onClick={createQuote} disabled={total <= 0 || order.payment_status === 'pagado'}>
-                <CreditCard className="h-4 w-4" /> {order.payment_link ? 'Actualizar presupuesto' : 'Generar enlace de pago'}
+                <CreditCard className="h-4 w-4" /> {paymentMethod === 'stripe' ? (order.payment_link ? 'Actualizar enlace Stripe' : 'Generar enlace de pago') : 'Registrar solicitud de pago'}
               </Button>
+              {paymentMethod !== 'stripe' && order.payment_status !== 'pagado' && <Button variant="outline" className="h-12 w-full rounded-full" onClick={registerManualPayment} disabled={total <= 0}><Send className="h-4 w-4" /> Marcar cobrado por {paymentMethodLabel}</Button>}
+              {order.payment_status === 'pagado' && <p className="rounded-2xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">Pago registrado · {PAYMENT_METHODS.find((method) => method.value === order.payment_method)?.label || order.payment_method || 'sin método'}</p>}
               {order.payment_link && (
                 <div className="rounded-2xl border bg-slate-50 p-3">
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Enlace Stripe demo</p>
@@ -230,8 +316,8 @@ export default function OrderDetail() {
               <div className="flex items-start gap-3">
                 <Truck className="mt-0.5 h-5 w-5 text-blue-400" />
                 <div>
-                  <p className="font-bold">Sin selección de negocios</p>
-                  <p className="mt-1 text-sm leading-6 text-white/60">El pedido puede requerir compras en varios establecimientos. Solo se registra el resultado operativo y las notas internas.</p>
+                  <p className="font-bold">Operativa multi-negocio</p>
+                  <p className="mt-1 text-sm leading-6 text-white/60">Puedes asignar varios negocios y compartir con cada uno la misma solicitud traducida, entrega y notas del cliente.</p>
                 </div>
               </div>
             </CardContent>
@@ -252,11 +338,12 @@ function Info({ icon: Icon, label, value }) {
 }
 
 function MoneyInput({ label, value, onChange }) {
+  const testId = `cost-${label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')}`;
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       <div className="relative">
-        <Input type="number" min="0" step="0.01" value={value || ''} onChange={(event) => onChange(event.target.value)} className="h-12 rounded-2xl pr-10" placeholder="0,00" />
+        <Input data-testid={testId} type="number" min="0" step="0.01" value={value || ''} onChange={(event) => onChange(event.target.value)} className="h-12 rounded-2xl pr-10" placeholder="0,00" />
         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">€</span>
       </div>
     </div>

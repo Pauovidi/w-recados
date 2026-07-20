@@ -22,9 +22,23 @@
     "client_notes": { "type": "string" },
     "attachment_urls": { "type": "array", "items": { "type": "string" } },
     "internal_notes": { "type": "string" },
+    "business_assignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "business_id": { "type": "string" },
+          "business_name": { "type": "string" },
+          "business_phone": { "type": "string" },
+          "business_email": { "type": "string" },
+          "preferred_channel": { "type": "string" }
+        }
+      }
+    },
+    "package_ids": { "type": "array", "items": { "type": "string" } },
     "order_status": {
       "type": "string",
-      "enum": ["nuevo", "presupuestado", "pendiente_pago", "pagado", "asignado", "recogido", "en_camino", "entregado", "cancelado"],
+      "enum": ["nuevo", "pendiente_pago", "confirmado", "en_proceso", "recogido", "en_camino", "entregado", "cancelado"],
       "default": "nuevo"
     },
     "assigned_delivery": { "type": "string" },
@@ -38,6 +52,7 @@
       "enum": ["sin_presupuestar", "pendiente", "pagado", "reembolsado"],
       "default": "sin_presupuestar"
     },
+    "payment_method": { "type": "string", "enum": ["stripe", "bizum", "efectivo", "transferencia"] },
     "payment_link": { "type": "string" },
     "stripe_checkout_session_id": { "type": "string" },
     "stripe_payment_intent_id": { "type": "string" },

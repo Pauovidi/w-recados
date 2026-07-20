@@ -1,0 +1,15 @@
+{
+  "name": "Business",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "phone": { "type": "string" },
+    "email": { "type": "string" },
+    "address": { "type": "string" },
+    "category": { "type": "string" },
+    "notes": { "type": "string" },
+    "preferred_channel": { "type": "string", "enum": ["whatsapp", "email", "both"], "default": "whatsapp" },
+    "is_active": { "type": "boolean", "default": true }
+  },
+  "required": ["name", "phone"]
+}

@@ -1,9 +1,8 @@
 export const ORDER_STATUSES = [
   { value: 'nuevo', label: 'Nuevo', tone: 'blue' },
-  { value: 'presupuestado', label: 'Presupuestado', tone: 'violet' },
   { value: 'pendiente_pago', label: 'Pendiente de pago', tone: 'amber' },
-  { value: 'pagado', label: 'Pagado', tone: 'emerald' },
-  { value: 'asignado', label: 'Asignado', tone: 'indigo' },
+  { value: 'confirmado', label: 'Confirmado', tone: 'emerald' },
+  { value: 'en_proceso', label: 'En proceso', tone: 'indigo' },
   { value: 'recogido', label: 'Recogido', tone: 'cyan' },
   { value: 'en_camino', label: 'En camino', tone: 'orange' },
   { value: 'entregado', label: 'Entregado', tone: 'green' },
@@ -15,6 +14,13 @@ export const PAYMENT_STATUSES = [
   { value: 'pendiente', label: 'Pendiente' },
   { value: 'pagado', label: 'Pagado' },
   { value: 'reembolsado', label: 'Reembolsado' },
+];
+
+export const PAYMENT_METHODS = [
+  { value: 'stripe', label: 'Tarjeta · Stripe' },
+  { value: 'bizum', label: 'Bizum' },
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'transferencia', label: 'Transferencia' },
 ];
 
 export const SERVICE_LABELS = {

@@ -2,7 +2,7 @@ const now = Date.now();
 const ago = (minutes) => new Date(now - minutes * 60_000).toISOString();
 const after = (minutes) => new Date(now + minutes * 60_000).toISOString();
 
-export const DEMO_VERSION = 5;
+export const DEMO_VERSION = 6;
 
 export const initialDemoState = {
   version: DEMO_VERSION,
@@ -21,6 +21,68 @@ export const initialDemoState = {
       zone: 'Las Playitas',
       is_active: true,
     },
+    {
+      id: 'rep_nora',
+      name: 'Nora — Repartidora demo',
+      phone: '+34611000444',
+      zone: 'Gran Tarajal',
+      is_active: true,
+    },
+  ],
+  businesses: [
+    {
+      id: 'biz_mercado_playitas',
+      name: 'Mercado Playitas',
+      phone: '+34928000111',
+      email: 'pedidos@mercado-playitas.demo',
+      address: 'Las Playitas',
+      category: 'Supermercado',
+      preferred_channel: 'whatsapp',
+      notes: 'Compras de alimentación y básicos. Recoger hasta las 20:30.',
+      is_active: true,
+    },
+    {
+      id: 'biz_farmacia_tuineje',
+      name: 'Farmacia Tuineje',
+      phone: '+34928000222',
+      email: 'pedidos@farmacia-tuineje.demo',
+      address: 'Tuineje',
+      category: 'Farmacia',
+      preferred_channel: 'both',
+      notes: 'Confirmar siempre disponibilidad de medicamento antes de desplazarse.',
+      is_active: true,
+    },
+    {
+      id: 'biz_regalos_costa',
+      name: 'Regalos Costa',
+      phone: '+34928000333',
+      email: 'encargos@regalos-costa.demo',
+      address: 'Gran Tarajal',
+      category: 'Regalos y compras personales',
+      preferred_channel: 'email',
+      notes: 'Flores, cargadores y artículos de regalo.',
+      is_active: true,
+    },
+  ],
+  packages: [
+    {
+      id: 'pkg_llegada',
+      name: 'Pack llegada',
+      service_type: 'supermercado',
+      description: 'Básicos para la primera noche.',
+      contents: 'Agua, leche, pan, fruta y aperitivos.',
+      notes: 'Plantilla orientativa; confirmar cantidades con el cliente.',
+      is_active: true,
+    },
+    {
+      id: 'pkg_farmacia',
+      name: 'Pack farmacia básico',
+      service_type: 'farmacia',
+      description: 'Productos habituales de bienestar.',
+      contents: 'After-sun, repelente, tiritas y solución salina.',
+      notes: 'Los medicamentos siempre requieren confirmación de disponibilidad.',
+      is_active: true,
+    },
   ],
   customers: [
     { id: 'cli_lucia', phone: '+34611000333', display_name: 'Lucía · prueba WhatsApp', language: 'es', order_count: 0, last_order_at: '' },
@@ -37,7 +99,8 @@ export const initialDemoState = {
       original_language: 'de', client_language: 'de', delivery_address: 'Villa 12, Playitas Resort',
       client_phone: '+447700900321', customer_id: 'cli_anna', preferred_schedule: 'tarde',
       client_notes: 'Bitte an der Rezeption anrufen.', internal_notes: '', attachments: [],
-      order_status: 'nuevo', payment_status: 'sin_presupuestar', assigned_delivery: '', assigned_delivery_name: '',
+      order_status: 'nuevo', payment_status: 'sin_presupuestar', payment_method: 'stripe', assigned_delivery: '', assigned_delivery_name: '',
+      business_assignments: [], package_ids: ['pkg_llegada'],
       product_cost: 0, transport_cost: 0, service_cost: 0, total: 0, payment_link: '',
       created_date: ago(18), updated_date: ago(18),
       status_history: [{ status: 'nuevo', at: ago(18), actor: 'Cliente' }],
@@ -50,14 +113,15 @@ export const initialDemoState = {
       original_language: 'en', client_language: 'en', delivery_address: 'Hotel Playitas, habitación 214',
       client_phone: '+447700900456', customer_id: 'cli_james', preferred_schedule: 'lo_antes_posible',
       client_notes: 'Call reception first.', internal_notes: 'Compra prioritaria. Confirmar formato del paracetamol.', attachments: [],
-      order_status: 'asignado', payment_status: 'pagado', assigned_delivery: 'rep_alberto', assigned_delivery_name: 'Álex — Repartidor demo',
+      order_status: 'en_proceso', payment_status: 'pagado', payment_method: 'stripe', assigned_delivery: 'rep_alberto', assigned_delivery_name: 'Álex — Repartidor demo',
+      business_assignments: [{ business_id: 'biz_farmacia_tuineje', business_name: 'Farmacia Tuineje', business_phone: '+34928000222', business_email: 'pedidos@farmacia-tuineje.demo', preferred_channel: 'both' }], package_ids: ['pkg_farmacia'],
       product_cost: 24.8, transport_cost: 4, service_cost: 8, total: 36.8, payment_link: '/pago/pay-1002',
       paid_at: ago(41), created_date: ago(72), updated_date: ago(32),
       status_history: [
         { status: 'nuevo', at: ago(72), actor: 'Cliente' },
         { status: 'pendiente_pago', at: ago(54), actor: 'Administración' },
-        { status: 'pagado', at: ago(41), actor: 'Stripe demo' },
-        { status: 'asignado', at: ago(32), actor: 'Administración' },
+        { status: 'confirmado', at: ago(41), actor: 'Stripe demo' },
+        { status: 'en_proceso', at: ago(32), actor: 'Administración' },
       ],
     },
     {
@@ -68,14 +132,18 @@ export const initialDemoState = {
       original_language: 'fr', client_language: 'fr', delivery_address: 'Aparthotel Playitas, apartamento B-07',
       client_phone: '+33612030405', customer_id: 'cli_marie', preferred_schedule: 'tarde',
       client_notes: "Laisser à la réception si je ne réponds pas.", internal_notes: 'Incluye compras en más de un establecimiento.', attachments: [],
-      order_status: 'en_camino', payment_status: 'pagado', assigned_delivery: 'rep_alberto', assigned_delivery_name: 'Álex — Repartidor demo',
+      order_status: 'en_camino', payment_status: 'pagado', payment_method: 'bizum', assigned_delivery: 'rep_alberto', assigned_delivery_name: 'Álex — Repartidor demo',
+      business_assignments: [
+        { business_id: 'biz_regalos_costa', business_name: 'Regalos Costa', business_phone: '+34928000333', business_email: 'encargos@regalos-costa.demo', preferred_channel: 'email' },
+        { business_id: 'biz_mercado_playitas', business_name: 'Mercado Playitas', business_phone: '+34928000111', business_email: 'pedidos@mercado-playitas.demo', preferred_channel: 'whatsapp' }
+      ], package_ids: [],
       product_cost: 32.5, transport_cost: 6, service_cost: 10, total: 48.5, payment_link: '/pago/pay-1001',
       paid_at: ago(118), created_date: ago(145), updated_date: ago(8),
       status_history: [
         { status: 'nuevo', at: ago(145), actor: 'Cliente' },
         { status: 'pendiente_pago', at: ago(132), actor: 'Administración' },
-        { status: 'pagado', at: ago(118), actor: 'Stripe demo' },
-        { status: 'asignado', at: ago(70), actor: 'Administración' },
+        { status: 'confirmado', at: ago(118), actor: 'Administración · Bizum' },
+        { status: 'en_proceso', at: ago(70), actor: 'Administración' },
         { status: 'recogido', at: ago(20), actor: 'Álex — Repartidor demo' },
         { status: 'en_camino', at: ago(8), actor: 'Álex — Repartidor demo' },
       ],

@@ -36,7 +36,7 @@ import {
   SERVICE_LABELS,
 } from '@/lib/domain';
 
-const ACTIVE_ORDER_STATUSES = new Set(['pagado', 'asignado', 'recogido', 'en_camino']);
+const ACTIVE_ORDER_STATUSES = new Set(['confirmado', 'en_proceso', 'recogido', 'en_camino']);
 
 const STATUS_TONE_CLASSES = {
   blue: 'border-blue-200 bg-blue-50 text-blue-700',

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { ClipboardList, Menu, MessageCircle, Search, Truck, Users, X } from 'lucide-react';
+import { Box, ClipboardList, Menu, MessageCircle, Search, Store, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
   { path: '/admin', label: 'Pedidos', icon: ClipboardList, exact: true },
   { path: '/admin/conversaciones', label: 'Conversaciones', icon: MessageCircle },
+  { path: '/admin/negocios', label: 'Negocios', icon: Store },
+  { path: '/admin/paquetes', label: 'Paquetes', icon: Box },
   { path: '/admin/repartidores', label: 'Repartidores', icon: Users },
-  { path: '/repartidor', label: 'Vista repartidor', icon: Truck },
+  { path: '/repartidor/acceso', label: 'Vista repartidor', icon: Truck },
   { path: '/', label: 'Vista cliente', icon: Search },
 ];
 

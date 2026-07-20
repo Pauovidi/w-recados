@@ -94,11 +94,14 @@ Deno.serve(async (req) => {
       client_name: displayName,
       preferred_schedule: text(payload.preferred_schedule, 100),
       client_notes: text(payload.client_notes, 1000),
+      business_assignments: [],
+      package_ids: [],
       attachment_urls: Array.isArray(payload.attachment_urls)
         ? payload.attachment_urls.map((value: unknown) => text(value, 1000)).filter(Boolean).slice(0, 3)
         : [],
       public_tracking_token: trackingToken,
       payment_token: paymentToken,
+      payment_method: "stripe",
       order_status: "nuevo",
       payment_status: "sin_presupuestar",
       status_history: [{ status: "nuevo", at: now, actor: "Cliente web" }],

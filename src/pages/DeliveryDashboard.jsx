@@ -7,7 +7,7 @@ import AssignedOrderCard from '@/components/delivery/AssignedOrderCard';
 import { useDemoStore } from '@/lib/DemoStore';
 
 const NEXT_DELIVERY_STATUS = {
-  asignado: 'recogido',
+  en_proceso: 'recogido',
   recogido: 'en_camino',
   en_camino: 'entregado',
 };
@@ -15,7 +15,7 @@ const NEXT_DELIVERY_STATUS = {
 const STATUS_PRIORITY = {
   en_camino: 0,
   recogido: 1,
-  asignado: 2,
+  en_proceso: 2,
   entregado: 3,
 };
 
@@ -63,7 +63,7 @@ export default function DeliveryDashboard() {
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-3 py-3 sm:px-5">
           <Button asChild variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full">
-            <Link to="/admin" aria-label="Volver al panel de administración">
+            <Link to="/repartidor/acceso" aria-label="Cambiar perfil de repartidor">
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
@@ -85,7 +85,7 @@ export default function DeliveryDashboard() {
             <Truck className="mx-auto mb-4 h-11 w-11 text-muted-foreground/45" />
             <h2 className="font-heading text-xl font-bold">No hay un repartidor activo</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-              Administración debe seleccionar un repartidor antes de abrir esta ruta de trabajo.
+              Selecciona un perfil de repartidor para abrir su ruta de trabajo.
             </p>
           </section>
         ) : assignedOrders.length === 0 ? (

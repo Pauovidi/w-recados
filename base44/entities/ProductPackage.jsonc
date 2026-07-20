@@ -1,0 +1,13 @@
+{
+  "name": "ProductPackage",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "service_type": { "type": "string" },
+    "description": { "type": "string" },
+    "contents": { "type": "string" },
+    "notes": { "type": "string" },
+    "is_active": { "type": "boolean", "default": true }
+  },
+  "required": ["name", "contents"]
+}

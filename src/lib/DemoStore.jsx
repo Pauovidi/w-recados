@@ -18,19 +18,30 @@ function loadState() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
     if (parsed?.version === DEMO_VERSION) return parsed;
-    if (parsed?.version === 4) {
+    if ([4, 5].includes(parsed?.version)) {
       const initial = cloneInitialState();
-      const demoCustomer = initial.customers.find((customer) => customer.id === 'cli_lucia');
-      const demoConversation = initial.conversations.find((conversation) => conversation.id === 'conv_lucia');
+      const mergeDemoRecords = (existing = [], defaults = []) => [
+        ...existing,
+        ...defaults.filter((item) => !existing.some((current) => current.id === item.id)),
+      ];
+      const migrateStatus = (status) => ({ pagado: 'confirmado', asignado: 'en_proceso' }[status] || status);
+      const orders = (parsed.orders || []).map((order) => ({
+        ...order,
+        order_status: migrateStatus(order.order_status),
+        payment_method: order.payment_method || 'stripe',
+        business_assignments: order.business_assignments || [],
+        package_ids: order.package_ids || [],
+        status_history: (order.status_history || []).map((event) => ({ ...event, status: migrateStatus(event.status) })),
+      }));
       return {
         ...parsed,
         version: DEMO_VERSION,
-        customers: parsed.customers?.some((customer) => customer.id === 'cli_lucia')
-          ? parsed.customers
-          : [demoCustomer, ...(parsed.customers || [])],
-        conversations: parsed.conversations?.some((conversation) => conversation.id === 'conv_lucia')
-          ? parsed.conversations
-          : [demoConversation, ...(parsed.conversations || [])],
+        orders,
+        couriers: mergeDemoRecords(parsed.couriers, initial.couriers),
+        businesses: mergeDemoRecords(parsed.businesses, initial.businesses),
+        packages: mergeDemoRecords(parsed.packages, initial.packages),
+        customers: mergeDemoRecords(parsed.customers, initial.customers),
+        conversations: mergeDemoRecords(parsed.conversations, initial.conversations),
       };
     }
     return cloneInitialState();
@@ -93,8 +104,11 @@ export function DemoStoreProvider({ children }) {
         translation_mode: payload.client_language === 'es' ? 'original' : 'demo',
         order_status: 'nuevo',
         payment_status: 'sin_presupuestar',
+        payment_method: 'stripe',
         assigned_delivery: '',
         assigned_delivery_name: '',
+        business_assignments: [],
+        package_ids: [],
         product_cost: 0,
         transport_cost: 0,
         service_cost: 0,
@@ -221,8 +235,11 @@ export function DemoStoreProvider({ children }) {
           attachments: [],
           order_status: 'nuevo',
           payment_status: 'sin_presupuestar',
+          payment_method: 'stripe',
           assigned_delivery: '',
           assigned_delivery_name: '',
+          business_assignments: [],
+          package_ids: [],
           product_cost: 0,
           transport_cost: 0,
           service_cost: 0,
@@ -337,17 +354,52 @@ export function DemoStoreProvider({ children }) {
           ...order,
           assigned_delivery: courier?.id || '',
           assigned_delivery_name: courier?.name || '',
-          order_status: courier ? 'asignado' : order.order_status,
+          order_status: courier ? 'en_proceso' : order.order_status,
           updated_date: updatedAt,
           status_history: courier
-            ? [...(order.status_history || []), { status: 'asignado', at: updatedAt, actor: 'Administración' }]
+            ? [...(order.status_history || []), { status: 'en_proceso', at: updatedAt, actor: 'Administración' }]
             : order.status_history,
         } : order),
       };
     });
   }, []);
 
-  const quoteOrder = useCallback((orderId, costs) => {
+  const assignBusinesses = useCallback((orderId, businessIds) => {
+    const updatedAt = new Date().toISOString();
+    setState((current) => {
+      const selected = current.businesses
+        .filter((business) => businessIds.includes(business.id))
+        .map((business) => ({
+          business_id: business.id,
+          business_name: business.name,
+          business_phone: business.phone,
+          business_email: business.email || '',
+          preferred_channel: business.preferred_channel || 'whatsapp',
+        }));
+      return {
+        ...current,
+        orders: current.orders.map((order) => order.id === orderId ? {
+          ...order,
+          business_assignments: selected,
+          updated_date: updatedAt,
+        } : order),
+      };
+    });
+  }, []);
+
+  const assignPackages = useCallback((orderId, packageIds) => {
+    const updatedAt = new Date().toISOString();
+    setState((current) => ({
+      ...current,
+      orders: current.orders.map((order) => order.id === orderId ? {
+        ...order,
+        package_ids: packageIds,
+        updated_date: updatedAt,
+      } : order),
+    }));
+  }, []);
+
+  const quoteOrder = useCallback((orderId, costs, paymentMethod = 'stripe') => {
     const updatedAt = new Date().toISOString();
     setState((current) => {
       const order = current.orders.find((item) => item.id === orderId);
@@ -356,8 +408,15 @@ export function DemoStoreProvider({ children }) {
       const transportCost = Number(costs.transport_cost || 0);
       const serviceCost = Number(costs.service_cost || 0);
       const total = Number((productCost + transportCost + serviceCost).toFixed(2));
-      const paymentLink = `${window.location.origin}/pago/${order.payment_token}`;
-      const body = `Pedido #${order.order_number} revisado. Total: ${total.toFixed(2)} €. Enlace de pago: ${paymentLink}`;
+      const paymentLink = paymentMethod === 'stripe' ? `${window.location.origin}/pago/${order.payment_token}` : '';
+      const methodLabel = {
+        bizum: 'Bizum',
+        efectivo: 'efectivo',
+        transferencia: 'transferencia',
+      }[paymentMethod];
+      const body = paymentMethod === 'stripe'
+        ? `Pedido #${order.order_number} revisado. Total: ${total.toFixed(2)} €. Enlace de pago: ${paymentLink}`
+        : `Pedido #${order.order_number} revisado. Total: ${total.toFixed(2)} €. Pago previsto por ${methodLabel}.`;
 
       return {
         ...current,
@@ -369,6 +428,7 @@ export function DemoStoreProvider({ children }) {
           total,
           payment_link: paymentLink,
           payment_status: 'pendiente',
+          payment_method: paymentMethod,
           order_status: 'pendiente_pago',
           updated_date: updatedAt,
           status_history: [...(item.status_history || []), { status: 'pendiente_pago', at: updatedAt, actor: 'Administración' }],
@@ -391,16 +451,17 @@ export function DemoStoreProvider({ children }) {
     setState((current) => {
       const order = current.orders.find((item) => item.payment_token === paymentToken);
       if (!order) return current;
-      paidOrder = { ...order, payment_status: 'pagado', order_status: 'pagado', paid_at: updatedAt };
+      paidOrder = { ...order, payment_status: 'pagado', payment_method: 'stripe', order_status: 'confirmado', paid_at: updatedAt };
       return {
         ...current,
         orders: current.orders.map((item) => item.id === order.id ? {
           ...item,
           payment_status: 'pagado',
-          order_status: 'pagado',
+          payment_method: 'stripe',
+          order_status: 'confirmado',
           paid_at: updatedAt,
           updated_date: updatedAt,
-          status_history: [...(item.status_history || []), { status: 'pagado', at: updatedAt, actor: 'Stripe demo' }],
+          status_history: [...(item.status_history || []), { status: 'confirmado', at: updatedAt, actor: 'Stripe demo' }],
         } : item),
         conversations: current.conversations.map((conversation) => conversation.phone === order.client_phone ? {
           ...conversation,
@@ -413,6 +474,39 @@ export function DemoStoreProvider({ children }) {
       };
     });
     return paidOrder;
+  }, []);
+
+  const markManualPaid = useCallback((orderId, paymentMethod) => {
+    const updatedAt = new Date().toISOString();
+    const methodLabel = {
+      bizum: 'Bizum',
+      efectivo: 'Efectivo',
+      transferencia: 'Transferencia',
+    }[paymentMethod] || 'Pago manual';
+    setState((current) => {
+      const order = current.orders.find((item) => item.id === orderId);
+      if (!order) return current;
+      return {
+        ...current,
+        orders: current.orders.map((item) => item.id === orderId ? {
+          ...item,
+          payment_status: 'pagado',
+          payment_method: paymentMethod,
+          order_status: 'confirmado',
+          paid_at: updatedAt,
+          updated_date: updatedAt,
+          status_history: [...(item.status_history || []), { status: 'confirmado', at: updatedAt, actor: `Administración · ${methodLabel}` }],
+        } : item),
+        conversations: current.conversations.map((conversation) => conversation.phone === order.client_phone ? {
+          ...conversation,
+          updated_at: updatedAt,
+          messages: [...conversation.messages, {
+            id: makeId('msg'), direction: 'system', body: `Pago del pedido #${order.order_number} registrado por ${methodLabel}.`,
+            at: updatedAt, status: 'recorded', provider: 'manual_payment',
+          }],
+        } : conversation),
+      };
+    });
   }, []);
 
   const sendMessage = useCallback((conversationId, body) => {
@@ -476,6 +570,60 @@ export function DemoStoreProvider({ children }) {
     }));
   }, []);
 
+  const createBusiness = useCallback((payload) => {
+    const business = { ...payload, id: makeId('biz'), is_active: payload.is_active !== false };
+    setState((current) => ({ ...current, businesses: [...current.businesses, business] }));
+    return business;
+  }, []);
+
+  const updateBusiness = useCallback((id, payload) => {
+    setState((current) => {
+      const previous = current.businesses.find((business) => business.id === id);
+      const next = { ...previous, ...payload };
+      return {
+        ...current,
+        businesses: current.businesses.map((business) => business.id === id ? next : business),
+        orders: current.orders.map((order) => ({
+          ...order,
+          business_assignments: (order.business_assignments || []).map((assignment) => assignment.business_id === id ? {
+            ...assignment,
+            business_name: next.name,
+            business_phone: next.phone,
+            business_email: next.email || '',
+            preferred_channel: next.preferred_channel || 'whatsapp',
+          } : assignment),
+        })),
+      };
+    });
+  }, []);
+
+  const deactivateBusiness = useCallback((id) => {
+    setState((current) => ({
+      ...current,
+      businesses: current.businesses.map((business) => business.id === id ? { ...business, is_active: false } : business),
+    }));
+  }, []);
+
+  const createPackage = useCallback((payload) => {
+    const productPackage = { ...payload, id: makeId('pkg'), is_active: payload.is_active !== false };
+    setState((current) => ({ ...current, packages: [...current.packages, productPackage] }));
+    return productPackage;
+  }, []);
+
+  const updatePackage = useCallback((id, payload) => {
+    setState((current) => ({
+      ...current,
+      packages: current.packages.map((productPackage) => productPackage.id === id ? { ...productPackage, ...payload } : productPackage),
+    }));
+  }, []);
+
+  const deactivatePackage = useCallback((id) => {
+    setState((current) => ({
+      ...current,
+      packages: current.packages.map((productPackage) => productPackage.id === id ? { ...productPackage, is_active: false } : productPackage),
+    }));
+  }, []);
+
   const resetDemo = useCallback(() => setState(cloneInitialState()), []);
 
   const value = useMemo(() => ({
@@ -483,8 +631,11 @@ export function DemoStoreProvider({ children }) {
     createOrder,
     updateOrder,
     assignCourier,
+    assignBusinesses,
+    assignPackages,
     quoteOrder,
     markDemoPaid,
+    markManualPaid,
     sendMessage,
     receiveWhatsAppMessage,
     markConversationRead,
@@ -492,8 +643,14 @@ export function DemoStoreProvider({ children }) {
     createCourier,
     updateCourier,
     deactivateCourier,
+    createBusiness,
+    updateBusiness,
+    deactivateBusiness,
+    createPackage,
+    updatePackage,
+    deactivatePackage,
     resetDemo,
-  }), [state, createOrder, updateOrder, assignCourier, quoteOrder, markDemoPaid, sendMessage, receiveWhatsAppMessage, markConversationRead, setActiveCourier, createCourier, updateCourier, deactivateCourier, resetDemo]);
+  }), [state, createOrder, updateOrder, assignCourier, assignBusinesses, assignPackages, quoteOrder, markDemoPaid, markManualPaid, sendMessage, receiveWhatsAppMessage, markConversationRead, setActiveCourier, createCourier, updateCourier, deactivateCourier, createBusiness, updateBusiness, deactivateBusiness, createPackage, updatePackage, deactivatePackage, resetDemo]);
 
   return <DemoStoreContext.Provider value={value}>{children}</DemoStoreContext.Provider>;
 }

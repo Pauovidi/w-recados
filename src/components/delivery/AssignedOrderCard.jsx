@@ -36,7 +36,7 @@ const STATUS_TONE_CLASSES = {
 };
 
 const NEXT_ACTION = {
-  asignado: {
+  en_proceso: {
     status: 'recogido',
     label: 'Confirmar recogida',
     hint: 'Ya tengo todos los productos',

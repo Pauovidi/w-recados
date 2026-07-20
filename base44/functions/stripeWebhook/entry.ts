@@ -40,11 +40,12 @@ Deno.serve(async (req) => {
     const paidAt = new Date().toISOString();
     await service.entities.Order.update(order.id, {
       payment_status: "pagado",
-      order_status: "pagado",
+      payment_method: "stripe",
+      order_status: "confirmado",
       paid_at: paidAt,
       stripe_checkout_session_id: session.id,
       stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : "",
-      status_history: appendStatus(order, "pagado", "Stripe"),
+      status_history: appendStatus(order, "confirmado", "Stripe"),
     });
 
     const conversations = await service.entities.Conversation.filter({ phone: order.client_phone }, "-created_date", 1);

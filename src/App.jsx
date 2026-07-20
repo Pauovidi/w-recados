@@ -13,8 +13,11 @@ import OrderDetail from './pages/admin/OrderDetail';
 import DeliveryPersonList from './pages/admin/DeliveryPersonList';
 import Conversations from './pages/admin/Conversations';
 import DeliveryDashboard from './pages/DeliveryDashboard';
+import CourierDemoAccess from './pages/CourierDemoAccess';
 import AdminLayout from './components/admin/AdminLayout';
 import DemoNavigator from './components/DemoNavigator';
+import BusinessList from './pages/admin/BusinessList';
+import PackageList from './pages/admin/PackageList';
 
 const RoutedApp = () => {
   return (
@@ -25,11 +28,14 @@ const RoutedApp = () => {
         <Route path="/pedido/confirmacion" element={<OrderConfirmation />} />
         <Route path="/pago/:token" element={<PaymentDemo />} />
         <Route path="/repartidor" element={<DeliveryDashboard />} />
+        <Route path="/repartidor/acceso" element={<CourierDemoAccess />} />
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="pedido/:id" element={<OrderDetail />} />
           <Route path="repartidores" element={<DeliveryPersonList />} />
+          <Route path="negocios" element={<BusinessList />} />
+          <Route path="paquetes" element={<PackageList />} />
           <Route path="conversaciones" element={<Conversations />} />
         </Route>
 
