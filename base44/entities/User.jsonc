@@ -5,10 +5,12 @@
       "description": "The role of the user in the app",
       "enum": [
         "admin",
-        "courier"
+        "courier",
+        "customer"
       ]
     },
-    "delivery_person_id": { "type": "string" }
+    "delivery_person_id": { "type": "string" },
+    "customer_id": { "type": "string" }
   },
   "required": [
     "role"

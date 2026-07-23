@@ -13,12 +13,18 @@ function cloneInitialState() {
   return JSON.parse(JSON.stringify(initialDemoState));
 }
 
+async function hashPassword(value) {
+  const encoded = new TextEncoder().encode(String(value || ''));
+  const digest = await crypto.subtle.digest('SHA-256', encoded);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 function loadState() {
   if (typeof window === 'undefined') return cloneInitialState();
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
     if (parsed?.version === DEMO_VERSION) return parsed;
-    if ([4, 5].includes(parsed?.version)) {
+    if ([4, 5, 6].includes(parsed?.version)) {
       const initial = cloneInitialState();
       const mergeDemoRecords = (existing = [], defaults = []) => [
         ...existing,
@@ -40,8 +46,14 @@ function loadState() {
         couriers: mergeDemoRecords(parsed.couriers, initial.couriers),
         businesses: mergeDemoRecords(parsed.businesses, initial.businesses),
         packages: mergeDemoRecords(parsed.packages, initial.packages),
+        client_accounts: mergeDemoRecords(parsed.client_accounts, initial.client_accounts),
         customers: mergeDemoRecords(parsed.customers, initial.customers),
         conversations: mergeDemoRecords(parsed.conversations, initial.conversations),
+        settings: {
+          ...initial.settings,
+          ...(parsed.settings || {}),
+          active_client_account_id: parsed.settings?.active_client_account_id || '',
+        },
       };
     }
     return cloneInitialState();
@@ -57,6 +69,13 @@ function nextOrderNumber(orders) {
 
 export function DemoStoreProvider({ children }) {
   const [state, setState] = useState(loadState);
+
+  const currentAccount = state.client_accounts?.find(
+    (account) => account.id === state.settings?.active_client_account_id,
+  ) || null;
+  const currentCustomer = state.customers.find(
+    (customer) => customer.id === currentAccount?.customer_id,
+  ) || null;
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -85,8 +104,15 @@ export function DemoStoreProvider({ children }) {
     let createdOrder;
 
     setState((current) => {
-      const phone = normalizePhone(payload.client_phone);
-      const existingCustomer = current.customers.find((customer) => customer.phone === phone);
+      const activeAccount = current.client_accounts?.find(
+        (account) => account.id === current.settings?.active_client_account_id,
+      );
+      const accountCustomer = current.customers.find(
+        (customer) => customer.id === activeAccount?.customer_id,
+      );
+      const phone = normalizePhone(accountCustomer?.phone || payload.client_phone);
+      const existingCustomer = accountCustomer
+        || current.customers.find((customer) => customer.phone === phone);
       const resolvedCustomerId = existingCustomer?.id || customerId;
       const orderNumber = nextOrderNumber(current.orders);
       const translatedText = translateForDemo(payload.original_text, payload.client_language);
@@ -178,6 +204,106 @@ export function DemoStoreProvider({ children }) {
     });
 
     return createdOrder || { id };
+  }, []);
+
+  const loginClient = useCallback(async ({ email, password }) => {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const passwordHash = await hashPassword(password);
+    const matched = (state.client_accounts || []).find(
+      (account) => account.email === normalizedEmail && account.password_hash === passwordHash,
+    ) || null;
+    if (!matched) throw new Error('Correo o contraseña incorrectos.');
+    setState((current) => {
+      return {
+        ...current,
+        settings: { ...current.settings, active_client_account_id: matched.id },
+      };
+    });
+    return matched;
+  }, [state.client_accounts]);
+
+  const registerClient = useCallback(async ({ name, email, phone, password, language }) => {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedEmail || !normalizedPhone || String(password || '').length < 8) {
+      throw new Error('Revisa el correo, teléfono y una contraseña de al menos 8 caracteres.');
+    }
+    if ((state.client_accounts || []).some((account) => account.email === normalizedEmail)) {
+      throw new Error('Ya existe una cuenta con ese correo.');
+    }
+    const passwordHash = await hashPassword(password);
+    const accountId = makeId('acc');
+    const customerId = makeId('cli');
+    const created = {
+      id: accountId,
+      customer_id: customerId,
+      email: normalizedEmail,
+      password_hash: passwordHash,
+      created_at: new Date().toISOString(),
+    };
+    setState((current) => {
+      const existingCustomer = current.customers.find((customer) => customer.phone === normalizedPhone);
+      const resolvedCustomerId = existingCustomer?.id || customerId;
+      const resolvedAccount = { ...created, customer_id: resolvedCustomerId };
+      const customers = existingCustomer
+        ? current.customers.map((customer) => customer.id === existingCustomer.id
+          ? { ...customer, email: normalizedEmail, display_name: name || customer.display_name, language }
+          : customer)
+        : [{
+            id: resolvedCustomerId,
+            phone: normalizedPhone,
+            email: normalizedEmail,
+            display_name: name || `Cliente ${normalizedPhone.slice(-4)}`,
+            language,
+            order_count: 0,
+            last_order_at: '',
+          }, ...current.customers];
+      return {
+        ...current,
+        client_accounts: [resolvedAccount, ...(current.client_accounts || [])],
+        customers,
+        settings: { ...current.settings, active_client_account_id: accountId },
+      };
+    });
+    return created;
+  }, [state.client_accounts]);
+
+  const logoutClient = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      settings: { ...current.settings, active_client_account_id: '' },
+    }));
+  }, []);
+
+  const sendClientPortalMessage = useCallback((body) => {
+    const cleanBody = String(body || '').trim();
+    if (!cleanBody) return;
+    const sentAt = new Date().toISOString();
+    setState((current) => {
+      const account = current.client_accounts?.find(
+        (item) => item.id === current.settings?.active_client_account_id,
+      );
+      const customer = current.customers.find((item) => item.id === account?.customer_id);
+      if (!customer) return current;
+      return {
+        ...current,
+        conversations: current.conversations.map((conversation) => conversation.customer_id === customer.id
+          ? {
+              ...conversation,
+              unread_count: Number(conversation.unread_count || 0) + 1,
+              updated_at: sentAt,
+              messages: [...(conversation.messages || []), {
+                id: makeId('msg'),
+                direction: 'inbound',
+                body: cleanBody,
+                at: sentAt,
+                status: 'received',
+                provider: 'client_portal',
+              }],
+            }
+          : conversation),
+      };
+    });
   }, []);
 
   const receiveWhatsAppMessage = useCallback((conversationId, body) => {
@@ -628,7 +754,13 @@ export function DemoStoreProvider({ children }) {
 
   const value = useMemo(() => ({
     ...state,
+    currentAccount,
+    currentCustomer,
     createOrder,
+    loginClient,
+    registerClient,
+    logoutClient,
+    sendClientPortalMessage,
     updateOrder,
     assignCourier,
     assignBusinesses,
@@ -650,7 +782,7 @@ export function DemoStoreProvider({ children }) {
     updatePackage,
     deactivatePackage,
     resetDemo,
-  }), [state, createOrder, updateOrder, assignCourier, assignBusinesses, assignPackages, quoteOrder, markDemoPaid, markManualPaid, sendMessage, receiveWhatsAppMessage, markConversationRead, setActiveCourier, createCourier, updateCourier, deactivateCourier, createBusiness, updateBusiness, deactivateBusiness, createPackage, updatePackage, deactivatePackage, resetDemo]);
+  }), [state, currentAccount, currentCustomer, createOrder, loginClient, registerClient, logoutClient, sendClientPortalMessage, updateOrder, assignCourier, assignBusinesses, assignPackages, quoteOrder, markDemoPaid, markManualPaid, sendMessage, receiveWhatsAppMessage, markConversationRead, setActiveCourier, createCourier, updateCourier, deactivateCourier, createBusiness, updateBusiness, deactivateBusiness, createPackage, updatePackage, deactivatePackage, resetDemo]);
 
   return <DemoStoreContext.Provider value={value}>{children}</DemoStoreContext.Provider>;
 }

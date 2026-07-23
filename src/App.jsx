@@ -18,6 +18,8 @@ import AdminLayout from './components/admin/AdminLayout';
 import DemoNavigator from './components/DemoNavigator';
 import BusinessList from './pages/admin/BusinessList';
 import PackageList from './pages/admin/PackageList';
+import ClientAccess from './pages/ClientAccess';
+import ClientArea from './pages/ClientArea';
 
 const RoutedApp = () => {
   return (
@@ -25,6 +27,8 @@ const RoutedApp = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/pedido" element={<OrderForm />} />
+        <Route path="/acceso" element={<ClientAccess />} />
+        <Route path="/mi-cuenta" element={<ClientArea />} />
         <Route path="/pedido/confirmacion" element={<OrderConfirmation />} />
         <Route path="/pago/:token" element={<PaymentDemo />} />
         <Route path="/repartidor" element={<DeliveryDashboard />} />

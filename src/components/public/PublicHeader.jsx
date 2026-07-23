@@ -1,12 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LanguageSelector from '@/components/public/LanguageSelector';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useDemoStore } from '@/lib/DemoStore';
 
 export default function PublicHeader() {
   const { t } = useLanguage();
+  const { currentAccount } = useDemoStore();
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_PHONE || '34600000000';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(t('header.whatsappPrefill'))}`;
 
@@ -23,13 +25,19 @@ export default function PublicHeader() {
 
         <div className="order-2 flex flex-wrap items-center gap-2 sm:order-2 sm:flex-nowrap">
           <LanguageSelector />
+          <Link to={currentAccount ? '/mi-cuenta' : '/acceso'} className="flex-1 sm:flex-none">
+            <Button variant="outline" className="h-11 w-full rounded-full px-4 text-sm font-semibold">
+              <UserRound className="h-4 w-4" />
+              {currentAccount ? t('account.myAccount') : t('account.access')}
+            </Button>
+          </Link>
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
             <Button variant="outline" className="h-11 w-full rounded-full px-5 text-sm font-semibold">
               <MessageCircle className="w-4 h-4" />
               {t('header.whatsapp')}
             </Button>
           </a>
-          <Link to="/pedido" className="flex-1 sm:flex-none">
+          <Link to="/#pedido" className="flex-1 sm:flex-none">
             <Button className="h-11 w-full rounded-full px-5 text-sm font-semibold shadow-sm">
               <Send className="w-4 h-4" />
               {t('header.order')}

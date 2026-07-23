@@ -1,11 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/hooks/useLanguage';
-
-export default function ServiceCard({ icon, title, description, serviceType }) {
-  const { t } = useLanguage();
+export default function ServiceCard({ icon, title, description }) {
   const ServiceIcon = icon;
 
   return (
@@ -14,13 +8,7 @@ export default function ServiceCard({ icon, title, description, serviceType }) {
         <ServiceIcon className="w-7 h-7 text-primary" />
       </div>
       <h3 className="mb-2 font-heading text-lg font-bold text-foreground">{title}</h3>
-      <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{description}</p>
-      <Link to={`/pedido?servicio=${serviceType}`}>
-        <Button className="h-11 rounded-full px-5 text-sm font-semibold shadow-sm">
-          {t('common.orderNow')}
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </Link>
+      <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
     </div>
   );
 }

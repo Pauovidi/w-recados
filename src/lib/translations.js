@@ -16,6 +16,19 @@ export const translations = {
     common: {
       orderNow: 'Pedir ahora',
     },
+    account: {
+      access: 'Acceder', myAccount: 'Mi cuenta', title: 'Accede a tu cuenta',
+      subtitle: 'Consulta tus pedidos y conversaciones desde un único lugar.',
+      login: 'Iniciar sesión', register: 'Crear cuenta', email: 'Correo electrónico',
+      password: 'Contraseña', name: 'Nombre', phone: 'Teléfono',
+      demoAccess: 'Acceso de demostración', historyTitle: 'Tus pedidos',
+      conversationsTitle: 'Conversaciones', newOrder: 'Hacer otro pedido',
+      logout: 'Cerrar sesión', emptyOrders: 'Todavía no tienes pedidos.',
+      emptyConversation: 'Todavía no hay mensajes.',
+      messagePlaceholder: 'Escribe un mensaje para administración…', send: 'Enviar',
+      loginRequired: 'Accede o crea una cuenta para enviar el pedido y conservar todo el historial.',
+      continue: 'Acceder para continuar',
+    },
     home: {
       heroBadge: 'Hoteles · Villas · Apartamentos · Pedidos locales',
       heroTitle: 'Dinos qué necesitas',
@@ -25,7 +38,7 @@ export const translations = {
       servicesTitle: 'Servicios disponibles',
       servicesSubtitle: 'Servicio manual, rápido y fácil de usar para pedidos locales.',
       stepsTitle: 'Cómo funciona',
-      stepsSubtitle: 'Simple, rápido y sin registro obligatorio',
+      stepsSubtitle: 'Simple, rápido y con todo tu historial guardado',
       steps: [
         { title: 'Haz tu pedido', desc: 'Escribe tu lista o envía fotos de lo que necesitas en tu idioma.' },
         { title: 'Te confirmamos', desc: 'Revisamos el pedido manualmente y te indicamos precio y disponibilidad.' },
@@ -59,8 +72,8 @@ export const translations = {
     },
     form: {
       title: 'Haz tu pedido',
-      subtitle: 'No necesitas registrarte. Cuéntanos lo que necesitas y lo gestionamos manualmente.',
-      noRegistration: 'Sin registro obligatorio',
+      subtitle: 'Cuéntanos lo que necesitas. Tu pedido quedará guardado en tu cuenta.',
+      noRegistration: 'Historial asociado a tu cuenta',
       demoWarning: 'Demostración: no introduzcas datos personales reales.',
       name: 'Nombre (opcional)',
       loadExample: 'Cargar ejemplo',
@@ -123,6 +136,19 @@ export const translations = {
     common: {
       orderNow: 'Order now',
     },
+    account: {
+      access: 'Sign in', myAccount: 'My account', title: 'Sign in to your account',
+      subtitle: 'View your orders and conversations in one place.',
+      login: 'Sign in', register: 'Create account', email: 'Email',
+      password: 'Password', name: 'Name', phone: 'Phone',
+      demoAccess: 'Demo access', historyTitle: 'Your orders',
+      conversationsTitle: 'Conversations', newOrder: 'Place another order',
+      logout: 'Sign out', emptyOrders: 'You have no orders yet.',
+      emptyConversation: 'There are no messages yet.',
+      messagePlaceholder: 'Write a message to the team…', send: 'Send',
+      loginRequired: 'Sign in or create an account to send the order and keep your full history.',
+      continue: 'Sign in to continue',
+    },
     home: {
       heroBadge: 'Hotels · Villas · Apartments · Local orders',
       heroTitle: 'Do you need anything during your stay?',
@@ -132,7 +158,7 @@ export const translations = {
       servicesTitle: 'Available services',
       servicesSubtitle: 'A fast and easy manual service for local orders.',
       stepsTitle: 'How it works',
-      stepsSubtitle: 'Simple, fast and no registration required',
+      stepsSubtitle: 'Simple, fast and with your full history saved',
       steps: [
         { title: 'Place your order', desc: 'Write your list or send photos of what you need in your language.' },
         { title: 'We confirm it', desc: 'We review the request manually and confirm price and availability.' },
@@ -166,8 +192,8 @@ export const translations = {
     },
     form: {
       title: 'Place your order',
-      subtitle: 'No registration needed. Tell us what you need and we will handle it manually.',
-      noRegistration: 'No registration required',
+      subtitle: 'Tell us what you need. Your order will be saved to your account.',
+      noRegistration: 'History linked to your account',
       demoWarning: 'Demo: do not enter real personal data.',
       name: 'Name (optional)',
       loadExample: 'Load example',
@@ -230,6 +256,19 @@ export const translations = {
     common: {
       orderNow: 'Jetzt bestellen',
     },
+    account: {
+      access: 'Anmelden', myAccount: 'Mein Konto', title: 'Bei deinem Konto anmelden',
+      subtitle: 'Bestellungen und Unterhaltungen an einem Ort ansehen.',
+      login: 'Anmelden', register: 'Konto erstellen', email: 'E-Mail',
+      password: 'Passwort', name: 'Name', phone: 'Telefon',
+      demoAccess: 'Demo-Zugang', historyTitle: 'Deine Bestellungen',
+      conversationsTitle: 'Unterhaltungen', newOrder: 'Weitere Bestellung',
+      logout: 'Abmelden', emptyOrders: 'Du hast noch keine Bestellungen.',
+      emptyConversation: 'Noch keine Nachrichten.',
+      messagePlaceholder: 'Nachricht an das Team schreiben…', send: 'Senden',
+      loginRequired: 'Melde dich an oder erstelle ein Konto, um die Bestellung zu senden und den Verlauf zu speichern.',
+      continue: 'Anmelden und fortfahren',
+    },
     home: {
       heroBadge: 'Hotels · Villen · Apartments · Lokale Bestellungen',
       heroTitle: 'Brauchen Sie etwas während Ihres Aufenthalts?',
@@ -239,7 +278,7 @@ export const translations = {
       servicesTitle: 'Verfügbare Services',
       servicesSubtitle: 'Ein schneller und einfacher manueller Service für lokale Bestellungen.',
       stepsTitle: 'So funktioniert es',
-      stepsSubtitle: 'Einfach, schnell und ohne Registrierung',
+      stepsSubtitle: 'Einfach, schnell und mit gespeichertem Verlauf',
       steps: [
         { title: 'Bestellung senden', desc: 'Schreiben Sie Ihre Liste oder senden Sie Fotos in Ihrer Sprache.' },
         { title: 'Wir bestätigen', desc: 'Wir prüfen die Anfrage manuell und bestätigen Preis und Verfügbarkeit.' },
@@ -273,8 +312,8 @@ export const translations = {
     },
     form: {
       title: 'Bestellung aufgeben',
-      subtitle: 'Keine Registrierung erforderlich. Sagen Sie uns, was Sie brauchen, und wir kümmern uns manuell darum.',
-      noRegistration: 'Keine Registrierung erforderlich',
+      subtitle: 'Sag uns, was du brauchst. Deine Bestellung wird in deinem Konto gespeichert.',
+      noRegistration: 'Verlauf mit deinem Konto verknüpft',
       demoWarning: 'Demo: Bitte keine echten persönlichen Daten eingeben.',
       name: 'Name (optional)',
       loadExample: 'Beispiel laden',
@@ -337,6 +376,19 @@ export const translations = {
     common: {
       orderNow: 'Commander',
     },
+    account: {
+      access: 'Se connecter', myAccount: 'Mon compte', title: 'Accédez à votre compte',
+      subtitle: 'Consultez vos commandes et conversations au même endroit.',
+      login: 'Se connecter', register: 'Créer un compte', email: 'E-mail',
+      password: 'Mot de passe', name: 'Nom', phone: 'Téléphone',
+      demoAccess: 'Accès de démonstration', historyTitle: 'Vos commandes',
+      conversationsTitle: 'Conversations', newOrder: 'Nouvelle commande',
+      logout: 'Se déconnecter', emptyOrders: 'Vous n’avez pas encore de commande.',
+      emptyConversation: 'Il n’y a pas encore de messages.',
+      messagePlaceholder: 'Écrivez un message à l’équipe…', send: 'Envoyer',
+      loginRequired: 'Connectez-vous ou créez un compte pour envoyer la commande et conserver tout l’historique.',
+      continue: 'Se connecter pour continuer',
+    },
     home: {
       heroBadge: 'Hôtels · Villas · Appartements · Commandes locales',
       heroTitle: 'Avez-vous besoin de quelque chose pendant votre séjour ?',
@@ -346,7 +398,7 @@ export const translations = {
       servicesTitle: 'Services disponibles',
       servicesSubtitle: 'Un service manuel, rapide et facile pour les commandes locales.',
       stepsTitle: 'Comment ça marche',
-      stepsSubtitle: 'Simple, rapide et sans inscription obligatoire',
+      stepsSubtitle: 'Simple, rapide et avec tout votre historique',
       steps: [
         { title: 'Passez votre commande', desc: 'Écrivez votre liste ou envoyez des photos dans votre langue.' },
         { title: 'Nous confirmons', desc: 'Nous vérifions la demande manuellement et confirmons le prix et la disponibilité.' },
@@ -380,8 +432,8 @@ export const translations = {
     },
     form: {
       title: 'Passer commande',
-      subtitle: 'Aucune inscription nécessaire. Dites-nous ce dont vous avez besoin et nous le gérons manuellement.',
-      noRegistration: 'Sans inscription obligatoire',
+      subtitle: 'Dites-nous ce dont vous avez besoin. La commande sera enregistrée dans votre compte.',
+      noRegistration: 'Historique lié à votre compte',
       demoWarning: 'Démo : ne saisissez pas de données personnelles réelles.',
       name: 'Nom (facultatif)',
       loadExample: 'Charger un exemple',

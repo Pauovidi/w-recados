@@ -2,7 +2,7 @@ const now = Date.now();
 const ago = (minutes) => new Date(now - minutes * 60_000).toISOString();
 const after = (minutes) => new Date(now + minutes * 60_000).toISOString();
 
-export const DEMO_VERSION = 6;
+export const DEMO_VERSION = 7;
 
 export const initialDemoState = {
   version: DEMO_VERSION,
@@ -12,7 +12,17 @@ export const initialDemoState = {
     whatsapp_provider: 'twilio_demo',
     stripe_provider: 'stripe_demo',
     active_courier_id: 'rep_alberto',
+    active_client_account_id: '',
   },
+  client_accounts: [
+    {
+      id: 'acc_anna',
+      customer_id: 'cli_anna',
+      email: 'anna@demo.wrecados.es',
+      password_hash: '0ead2060b65992dca4769af601a1b3a35ef38cfad2c2c465bb160ea764157c5d',
+      created_at: ago(1440),
+    },
+  ],
   couriers: [
     {
       id: 'rep_alberto',
@@ -86,7 +96,7 @@ export const initialDemoState = {
   ],
   customers: [
     { id: 'cli_lucia', phone: '+34611000333', display_name: 'Lucía · prueba WhatsApp', language: 'es', order_count: 0, last_order_at: '' },
-    { id: 'cli_anna', phone: '+447700900321', display_name: 'Anna Müller', language: 'de', order_count: 1, last_order_at: ago(18) },
+    { id: 'cli_anna', phone: '+447700900321', email: 'anna@demo.wrecados.es', display_name: 'Anna Müller', language: 'de', order_count: 1, last_order_at: ago(18) },
     { id: 'cli_james', phone: '+447700900456', display_name: 'James Wilson', language: 'en', order_count: 1, last_order_at: ago(72) },
     { id: 'cli_marie', phone: '+33612030405', display_name: 'Marie Laurent', language: 'fr', order_count: 1, last_order_at: ago(145) },
   ],

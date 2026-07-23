@@ -3,6 +3,8 @@
   "type": "object",
   "properties": {
     "phone": { "type": "string" },
+    "email": { "type": "string" },
+    "user_id": { "type": "string" },
     "display_name": { "type": "string" },
     "language": { "type": "string", "enum": ["es", "en", "de", "fr"] },
     "order_count": { "type": "number", "default": 0 },

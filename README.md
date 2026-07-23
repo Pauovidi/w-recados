@@ -8,13 +8,15 @@ No es un ecommerce: no existe catálogo de productos ni se guardan o asignan com
 
 La configuración predeterminada usa un almacén local del navegador con datos ficticios. Permite enseñar el recorrido completo sin cuentas externas, mensajes reales ni tarjetas:
 
-1. Cliente: `/pedido` crea una solicitud en español, inglés, alemán o francés.
+1. Cliente: la portada integra el formulario de pedido y `/acceso` permite entrar en el área personal con historial de pedidos y conversaciones.
 2. Administración: `/admin` busca y filtra pedidos, revisa original/traducción, presupuesta, asigna repartidor y gestiona notas.
 3. Conversaciones: `/admin/conversaciones` simula la bandeja WhatsApp.
 4. Pago: el enlace generado abre una simulación de Stripe que no solicita tarjeta ni cobra.
 5. Repartidor: `/repartidor` está diseñado primero para móvil y avanza por `Asignado → Recogido → En camino → Entregado`.
 
 El selector inferior permite saltar entre perfiles y restaurar los datos iniciales. No introduzcas datos personales reales en este modo: el contenido se guarda únicamente en `localStorage` y no se sincroniza entre dispositivos.
+
+Para probar el área de cliente en la demo usa `anna@demo.wrecados.es` y la contraseña `demo1234`. En producción, Base44 sustituirá esta sesión local por autenticación y persistencia reales.
 
 ### Probar una comanda recibida por WhatsApp
 
