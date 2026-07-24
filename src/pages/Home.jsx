@@ -34,7 +34,10 @@ export default function Home() {
 
   useEffect(() => {
     if (window.location.hash !== '#pedido') return;
-    document.getElementById('pedido')?.scrollIntoView({ block: 'start' });
+    document.getElementById('pedido')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   }, []);
 
   return (
