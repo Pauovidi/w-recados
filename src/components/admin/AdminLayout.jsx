@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Box, ClipboardList, Menu, MessageCircle, Search, Store, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useDemoStore } from '@/lib/DemoStore';
 
 const navItems = [
   { path: '/admin', label: 'Pedidos', icon: ClipboardList, exact: true },
@@ -16,6 +17,14 @@ const navItems = [
 export default function AdminLayout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { currentUser, currentAccount, authLoading, isProduction } = useDemoStore();
+  const user = currentUser || currentAccount;
+
+  if (isProduction && authLoading) {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Cargando panel…</div>;
+  }
+  if (isProduction && !user) return <Navigate to="/acceso?return=/admin" replace />;
+  if (isProduction && user.role !== 'admin') return <Navigate to="/mi-cuenta" replace />;
 
   const isActive = (item) => {
     if (item.exact) return location.pathname === item.path || location.pathname.startsWith('/admin/pedido/');
@@ -57,8 +66,8 @@ export default function AdminLayout() {
 
         <div className="border-t border-white/10 p-4">
           <div className="rounded-2xl bg-white/5 p-3">
-            <p className="text-xs font-semibold text-white">Demo operativa</p>
-            <p className="mt-1 text-[11px] leading-4 text-white/45">Twilio y Stripe funcionan en modo simulado.</p>
+            <p className="text-xs font-semibold text-white">{isProduction ? 'Operación real' : 'Demo operativa'}</p>
+            <p className="mt-1 text-[11px] leading-4 text-white/45">{isProduction ? 'Datos persistentes · chat web activo.' : 'Servicios externos en modo simulado.'}</p>
           </div>
         </div>
       </aside>

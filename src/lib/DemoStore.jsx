@@ -7,7 +7,7 @@ import {
 } from '@/lib/whatsapp-intake';
 
 const STORAGE_KEY = 'w-recados-demo-v4';
-const DemoStoreContext = createContext(null);
+export const DemoStoreContext = createContext(null);
 
 function cloneInitialState() {
   return JSON.parse(JSON.stringify(initialDemoState));
@@ -67,7 +67,7 @@ function nextOrderNumber(orders) {
   return String(highest + 1);
 }
 
-export function DemoStoreProvider({ children }) {
+export function LocalStoreProvider({ children }) {
   const [state, setState] = useState(loadState);
 
   const currentAccount = state.client_accounts?.find(
@@ -754,6 +754,8 @@ export function DemoStoreProvider({ children }) {
 
   const value = useMemo(() => ({
     ...state,
+    isProduction: false,
+    authLoading: false,
     currentAccount,
     currentCustomer,
     createOrder,

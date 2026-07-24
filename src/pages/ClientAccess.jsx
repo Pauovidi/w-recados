@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff, KeyRound, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,18 +15,32 @@ export default function ClientAccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { language, languages, t } = useLanguage();
-  const { loginClient, registerClient } = useDemoStore();
+  const {
+    loginClient, registerClient, verifyClient, resendOtp, isProduction,
+  } = useDemoStore();
   const [mode, setMode] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [pendingRegistration, setPendingRegistration] = useState(null);
+  const [otpCode, setOtpCode] = useState('');
   const [form, setForm] = useState({
     name: '',
-    email: 'anna@demo.wrecados.es',
+    email: '',
     phone: '',
-    password: 'demo1234',
+    password: '',
     language,
   });
+
+  useEffect(() => {
+    if (!isProduction) {
+      setForm((current) => ({
+        ...current,
+        email: current.email || 'anna@demo.wrecados.es',
+        password: current.password || 'demo1234',
+      }));
+    }
+  }, [isProduction]);
 
   const setField = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const returnTo = searchParams.get('return');
@@ -37,10 +51,26 @@ export default function ClientAccess() {
     setSending(true);
     setError('');
     try {
-      if (mode === 'login') {
-        await loginClient(form);
+      if (mode === 'verify') {
+        const verifiedUser = await verifyClient({
+          email: pendingRegistration.email,
+          otpCode,
+          profile: pendingRegistration.profile,
+        });
+        navigate(verifiedUser?.role === 'admin' ? '/admin' : safeReturnTo);
+        return;
+      } else if (mode === 'login') {
+        const signedInUser = await loginClient(form);
+        navigate(signedInUser?.role === 'admin' ? '/admin' : safeReturnTo);
+        return;
       } else {
-        await registerClient(form);
+        const registration = await registerClient(form);
+        if (registration?.verificationRequired) {
+          setPendingRegistration(registration);
+          setMode('verify');
+          setSending(false);
+          return;
+        }
       }
       navigate(safeReturnTo);
     } catch (submitError) {
@@ -67,16 +97,35 @@ export default function ClientAccess() {
               <p className="mt-2 text-sm leading-6 text-white/65">{t('account.subtitle')}</p>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
-              <div className="mb-6 grid grid-cols-2 rounded-2xl bg-muted p-1">
+              {mode !== 'verify' && <div className="mb-6 grid grid-cols-2 rounded-2xl bg-muted p-1">
                 <button type="button" onClick={() => setMode('login')} className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${mode === 'login' ? 'bg-white shadow-sm' : 'text-muted-foreground'}`}>
                   {t('account.login')}
                 </button>
                 <button type="button" onClick={() => setMode('register')} className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${mode === 'register' ? 'bg-white shadow-sm' : 'text-muted-foreground'}`}>
                   {t('account.register')}
                 </button>
-              </div>
+              </div>}
 
               <form onSubmit={submit} className="space-y-4">
+                {mode === 'verify' && (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-950">
+                      Hemos enviado un código de verificación a <strong>{pendingRegistration?.email}</strong>.
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Código de verificación</Label>
+                      <Input
+                        value={otpCode}
+                        onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        required
+                        className="h-14 rounded-2xl text-center text-xl tracking-[0.35em]"
+                        placeholder="000000"
+                      />
+                    </div>
+                  </div>
+                )}
                 {mode === 'register' && (
                   <>
                     <div className="space-y-2">
@@ -99,11 +148,11 @@ export default function ClientAccess() {
                   </>
                 )}
 
-                <div className="space-y-2">
+                {mode !== 'verify' && <div className="space-y-2">
                   <Label>{t('account.email')}</Label>
                   <Input data-testid="client-email" type="email" value={form.email} onChange={(event) => setField('email', event.target.value)} required className="h-12 rounded-2xl" />
-                </div>
-                <div className="space-y-2">
+                </div>}
+                {mode !== 'verify' && <div className="space-y-2">
                   <Label>{t('account.password')}</Label>
                   <div className="relative">
                     <Input data-testid="client-password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => setField('password', event.target.value)} minLength={8} required className="h-12 rounded-2xl pr-12" />
@@ -111,9 +160,9 @@ export default function ClientAccess() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                </div>
+                </div>}
 
-                {mode === 'login' && (
+                {mode === 'login' && !isProduction && (
                   <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-950">
                     <p className="font-bold">{t('account.demoAccess')}</p>
                     <p className="mt-1">anna@demo.wrecados.es · demo1234</p>
@@ -124,8 +173,14 @@ export default function ClientAccess() {
 
                 <Button data-testid="client-access-submit" type="submit" disabled={sending} className="h-12 w-full rounded-full">
                   {mode === 'login' ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  {mode === 'login' ? t('account.login') : t('account.register')}
+                  {mode === 'verify' ? 'Verificar y entrar' : mode === 'login' ? t('account.login') : t('account.register')}
                 </Button>
+                {mode === 'verify' && (
+                  <div className="flex flex-wrap justify-center gap-3 text-sm">
+                    <button type="button" className="font-semibold text-primary" onClick={() => resendOtp(pendingRegistration.email)}>Reenviar código</button>
+                    <button type="button" className="text-muted-foreground" onClick={() => setMode('register')}>Cambiar datos</button>
+                  </div>
+                )}
               </form>
             </CardContent>
           </Card>

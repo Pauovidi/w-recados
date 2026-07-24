@@ -2,8 +2,6 @@ import { createClientFromRequest } from "npm:@base44/sdk";
 import { createOrder } from "./customerPortal.ts";
 import { errorResponse, json } from "./utils.ts";
 
-// Compatibility endpoint for the first frontend version. It is intentionally no
-// longer public: createOrder requires a verified Base44 customer session.
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
   try {

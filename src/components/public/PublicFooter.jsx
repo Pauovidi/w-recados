@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, MessageCircle, Phone } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { WHATSAPP_ENABLED } from '@/lib/features';
 
 export default function PublicFooter() {
   const { t } = useLanguage();
@@ -23,10 +24,10 @@ export default function PublicFooter() {
                 <Phone className="w-4 h-4 text-primary" />
                 <span>{import.meta.env.VITE_WHATSAPP_PHONE_DISPLAY || t('footer.phonePending')}</span>
               </div>
-              <div className="flex items-center gap-2">
+              {WHATSAPP_ENABLED && <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-primary" />
                 <span>WhatsApp</span>
-              </div>
+              </div>}
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary" />
                 <span>{t('footer.location')}</span>

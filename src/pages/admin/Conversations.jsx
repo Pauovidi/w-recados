@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { useDemoStore } from '@/lib/DemoStore';
+import { WHATSAPP_ENABLED } from '@/lib/features';
 import {
   formatCurrency,
   formatDateTime,
@@ -113,6 +114,7 @@ export default function Conversations() {
     sendMessage,
     receiveWhatsAppMessage,
     markConversationRead,
+    isProduction,
   } = useDemoStore();
   const [search, setSearch] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState(searchParams.get('chat'));
@@ -228,7 +230,7 @@ export default function Conversations() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-extrabold">Conversaciones WhatsApp</h1>
+          <h1 className="font-heading text-3xl font-extrabold">Conversaciones con clientes</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Atiende al cliente y consulta sus pedidos desde una sola bandeja.
           </p>
@@ -238,7 +240,7 @@ export default function Conversations() {
           className="w-fit gap-2 rounded-full border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-800"
         >
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          Twilio · modo demo
+          {WHATSAPP_ENABLED ? 'WhatsApp activo' : isProduction ? 'Chat web activo' : 'Chat · modo demo'}
         </Badge>
       </div>
 
@@ -478,7 +480,7 @@ export default function Conversations() {
                   </div>
                 </ScrollArea>
 
-                <form onSubmit={handleIncomingMessage} className="border-t border-violet-200 bg-violet-50/90 p-3 sm:px-4">
+                {WHATSAPP_ENABLED && !isProduction && <form onSubmit={handleIncomingMessage} className="border-t border-violet-200 bg-violet-50/90 p-3 sm:px-4">
                   <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-violet-900">
                     <Smartphone className="h-4 w-4" />
                     Simular mensaje entrante del cliente
@@ -505,15 +507,17 @@ export default function Conversations() {
                       <span className="hidden sm:inline">Recibir</span>
                     </Button>
                   </div>
-                </form>
+                </form>}
 
                 <form onSubmit={handleSend} className="border-t border-border bg-card p-3 sm:p-4">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      {freeFormWindowOpen
-                        ? 'Twilio demo · respuesta libre disponible durante 24 h.'
-                        : 'Twilio demo · en producción el primer contacto exige una plantilla aprobada.'}
+                      {WHATSAPP_ENABLED
+                        ? freeFormWindowOpen
+                          ? 'WhatsApp · respuesta libre disponible durante 24 h.'
+                          : 'WhatsApp · el primer contacto exige una plantilla aprobada.'
+                        : 'Chat web privado entre el cliente y Administración.'}
                     </span>
                     <span>Intro para enviar · Mayús + Intro para salto de línea</span>
                   </div>
@@ -525,7 +529,7 @@ export default function Conversations() {
                       rows={1}
                       maxLength={2000}
                       placeholder="Escribe una respuesta..."
-                      aria-label="Respuesta de WhatsApp"
+                      aria-label="Respuesta al cliente"
                       className="min-h-12 max-h-32 resize-y rounded-2xl bg-background px-4 py-3"
                     />
                     <Button
@@ -533,7 +537,7 @@ export default function Conversations() {
                       size="icon"
                       disabled={!draft.trim()}
                       className="h-12 w-12 shrink-0 rounded-2xl"
-                      aria-label="Enviar respuesta en modo demo"
+                      aria-label="Enviar respuesta"
                     >
                       <Send />
                     </Button>
@@ -547,10 +551,10 @@ export default function Conversations() {
                 </div>
                 <h2 className="mt-5 font-heading text-xl font-bold">Selecciona una conversación</h2>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-                  Consulta el historial, abre sus pedidos relacionados y responde desde la bandeja de WhatsApp.
+                  Consulta el historial, abre sus pedidos relacionados y responde desde el chat privado.
                 </p>
                 <Badge variant="outline" className="mt-4 rounded-full border-emerald-200 bg-emerald-50 text-emerald-800">
-                  Entorno Twilio de demostración
+                  {WHATSAPP_ENABLED ? 'Canal WhatsApp' : 'Canal web'}
                 </Badge>
               </div>
             )}

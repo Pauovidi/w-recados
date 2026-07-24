@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useDemoStore } from '@/lib/DemoStore';
+import { WHATSAPP_ENABLED } from '@/lib/features';
 
 const blankBusiness = {
-  name: '', phone: '', email: '', address: '', category: '', preferred_channel: 'whatsapp', notes: '', is_active: true,
+  name: '', phone: '', email: '', address: '', category: '', preferred_channel: WHATSAPP_ENABLED ? 'whatsapp' : 'email', notes: '', is_active: true,
 };
 
 export default function BusinessList() {
@@ -84,8 +85,8 @@ export default function BusinessList() {
               </div>
               <div className="mt-5 flex flex-wrap gap-2 border-t pt-4">
                 <Badge variant="secondary">{assignments} {assignments === 1 ? 'pedido asignado' : 'pedidos asignados'}</Badge>
-                {whatsappHref && business.preferred_channel !== 'email' && <Button asChild variant="outline" size="sm" className="rounded-full"><a href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5 text-emerald-600" /> WhatsApp</a></Button>}
-                {business.email && business.preferred_channel !== 'whatsapp' && <Button asChild variant="outline" size="sm" className="rounded-full"><a href={`mailto:${business.email}`}><Mail className="h-3.5 w-3.5" /> Email</a></Button>}
+                {WHATSAPP_ENABLED && whatsappHref && business.preferred_channel !== 'email' && <Button asChild variant="outline" size="sm" className="rounded-full"><a href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5 text-emerald-600" /> WhatsApp</a></Button>}
+                {business.email && (!WHATSAPP_ENABLED || business.preferred_channel !== 'whatsapp') && <Button asChild variant="outline" size="sm" className="rounded-full"><a href={`mailto:${business.email}`}><Mail className="h-3.5 w-3.5" /> Email</a></Button>}
                 <Button
                   variant="outline"
                   size="sm"
@@ -109,7 +110,7 @@ export default function BusinessList() {
             <Field label="Email"><Input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} className="h-11 rounded-xl" placeholder="pedidos@negocio.com" /></Field>
             <Field label="Categoría"><Input value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))} className="h-11 rounded-xl" placeholder="Supermercado, farmacia…" /></Field>
             <Field label="Dirección"><Input value={form.address} onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))} className="h-11 rounded-xl" /></Field>
-            <Field label="Canal preferido"><select value={form.preferred_channel} onChange={(event) => setForm((current) => ({ ...current, preferred_channel: event.target.value }))} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="both">WhatsApp y email</option></select></Field>
+            <Field label="Canal preferido"><select value={form.preferred_channel} onChange={(event) => setForm((current) => ({ ...current, preferred_channel: event.target.value }))} className="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm">{WHATSAPP_ENABLED && <option value="whatsapp">WhatsApp</option>}<option value="email">Email</option>{WHATSAPP_ENABLED && <option value="both">WhatsApp y email</option>}</select></Field>
             <div className="sm:col-span-2"><Field label="Notas internas"><Textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} className="rounded-xl" /></Field></div>
             <div className="flex items-center gap-3 sm:col-span-2"><Switch checked={form.is_active} onCheckedChange={(value) => setForm((current) => ({ ...current, is_active: value }))} /><Label>Negocio activo</Label></div>
           </div>

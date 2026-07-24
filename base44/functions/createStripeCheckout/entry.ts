@@ -7,7 +7,7 @@ import {
   requireAdmin,
   requireEnv,
   text,
-} from "../_shared/utils.ts";
+} from "./utils.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);

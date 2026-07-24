@@ -11,5 +11,16 @@
     "last_order_at": { "type": "string" },
     "marketing_consent": { "type": "boolean", "default": false }
   },
-  "required": ["phone"]
+  "required": ["phone"],
+  "rls": {
+    "create": { "user_condition": { "role": "admin" } },
+    "read": {
+      "$or": [
+        { "data.user_id": "{{user.id}}" },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
 }

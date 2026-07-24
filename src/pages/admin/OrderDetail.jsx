@@ -17,6 +17,7 @@ import { useDemoStore } from '@/lib/DemoStore';
 import {
   formatCurrency, formatDateTime, LANGUAGE_LABELS, normalizePhone, ORDER_STATUSES, PAYMENT_METHODS, SERVICE_LABELS,
 } from '@/lib/domain';
+import { WHATSAPP_ENABLED } from '@/lib/features';
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -249,7 +250,7 @@ export default function OrderDetail() {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <a href={whatsappUrl} target="_blank" rel="noreferrer"><Button variant="outline" className="h-12 w-full rounded-full"><MessageCircle className="h-4 w-4 text-emerald-600" /> WhatsApp cliente</Button></a>
+                {WHATSAPP_ENABLED && <a href={whatsappUrl} target="_blank" rel="noreferrer"><Button variant="outline" className="h-12 w-full rounded-full"><MessageCircle className="h-4 w-4 text-emerald-600" /> WhatsApp cliente</Button></a>}
                 {conversation && <Link to={`/admin/conversaciones?chat=${conversation.id}`}><Button variant="outline" className="h-12 w-full rounded-full"><MessageCircle className="h-4 w-4" /> Abrir conversación</Button></Link>}
               </div>
             </CardContent>
@@ -263,7 +264,7 @@ export default function OrderDetail() {
                 {activeBusinesses.length === 0 ? <p className="text-sm text-muted-foreground">No hay negocios activos.</p> : activeBusinesses.map((business) => (
                   <label key={business.id} className="flex cursor-pointer items-start gap-3 rounded-2xl border p-3">
                     <Checkbox checked={businessIds.includes(business.id)} onCheckedChange={(checked) => toggleId(businessIds, setBusinessIds, business.id, checked)} />
-                    <span className="min-w-0"><span className="block text-sm font-semibold">{business.name}</span><span className="mt-0.5 block text-xs text-muted-foreground">{business.category || 'Sin categoría'} · {business.preferred_channel === 'email' ? 'Email' : business.preferred_channel === 'both' ? 'WhatsApp y email' : 'WhatsApp'}</span></span>
+                    <span className="min-w-0"><span className="block text-sm font-semibold">{business.name}</span><span className="mt-0.5 block text-xs text-muted-foreground">{business.category || 'Sin categoría'} · {WHATSAPP_ENABLED ? business.preferred_channel === 'email' ? 'Email' : business.preferred_channel === 'both' ? 'WhatsApp y email' : 'WhatsApp' : business.email ? 'Email' : 'Contacto interno'}</span></span>
                   </label>
                 ))}
               </div>
@@ -273,7 +274,7 @@ export default function OrderDetail() {
                 {assignedBusinesses.map((assignment) => {
                   const whatsappHref = getBusinessWhatsAppUrl(assignment);
                   const emailHref = getBusinessEmailUrl(assignment);
-                  return <div key={assignment.business_id} className="rounded-2xl bg-emerald-50 p-3"><p className="text-sm font-semibold text-emerald-950">{assignment.business_name}</p><div className="mt-2 flex flex-wrap gap-2">{whatsappHref && assignment.preferred_channel !== 'email' && <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 bg-white"><a href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5 text-emerald-600" /> WhatsApp</a></Button>}{emailHref && assignment.preferred_channel !== 'whatsapp' && <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 bg-white"><a href={emailHref}><Mail className="h-3.5 w-3.5" /> Email</a></Button>}{!whatsappHref && !emailHref && <span className="text-xs text-muted-foreground">Sin canal de contacto.</span>}</div></div>;
+                  return <div key={assignment.business_id} className="rounded-2xl bg-emerald-50 p-3"><p className="text-sm font-semibold text-emerald-950">{assignment.business_name}</p><div className="mt-2 flex flex-wrap gap-2">{WHATSAPP_ENABLED && whatsappHref && assignment.preferred_channel !== 'email' && <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 bg-white"><a href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5 text-emerald-600" /> WhatsApp</a></Button>}{emailHref && (!WHATSAPP_ENABLED || assignment.preferred_channel !== 'whatsapp') && <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 bg-white"><a href={emailHref}><Mail className="h-3.5 w-3.5" /> Email</a></Button>}{(!WHATSAPP_ENABLED || !whatsappHref) && !emailHref && <span className="text-xs text-muted-foreground">Sin canal de contacto activo.</span>}</div></div>;
                 })}
               </div>}
             </CardContent>

@@ -5,7 +5,7 @@ import {
   json,
   requireAdmin,
   text,
-} from "../_shared/utils.ts";
+} from "./utils.ts";
 
 const MANUAL_METHODS = new Set(["bizum", "efectivo", "transferencia"]);
 

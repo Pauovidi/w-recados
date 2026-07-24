@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Clock3, Home, MessageCircle } from 'lucide-react';
+import { CheckCircle2, Clock3, Home, MessageCircle, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PublicHeader from '@/components/public/PublicHeader';
 import PublicFooter from '@/components/public/PublicFooter';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDemoStore } from '@/lib/DemoStore';
 import { normalizePhone } from '@/lib/domain';
+import { WHATSAPP_ENABLED } from '@/lib/features';
 
 export default function OrderConfirmation() {
   const { t } = useLanguage();
@@ -45,11 +46,15 @@ export default function OrderConfirmation() {
                   <Home className="w-4 h-4" /> {t('confirmation.home')}
                 </Button>
               </Link>
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              {WHATSAPP_ENABLED ? <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <Button className="h-12 rounded-full px-6 font-semibold w-full sm:w-auto">
                   <MessageCircle className="w-4 h-4" /> {t('confirmation.whatsapp')}
                 </Button>
-              </a>
+              </a> : <Link to="/mi-cuenta">
+                <Button className="h-12 w-full rounded-full px-6 font-semibold sm:w-auto">
+                  <UserRound className="h-4 w-4" /> {t('account.myAccount')}
+                </Button>
+              </Link>}
             </div>
           </div>
         </div>

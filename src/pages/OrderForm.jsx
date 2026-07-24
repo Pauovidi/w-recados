@@ -41,7 +41,7 @@ function loadDraft(language) {
 export function OrderFormPanel({ embedded = false }) {
   const navigate = useNavigate();
   const { language, dictionary, t, languages } = useLanguage();
-  const { createOrder, currentAccount, currentCustomer } = useDemoStore();
+  const { createOrder, currentAccount, currentCustomer, isProduction } = useDemoStore();
   const [form, setForm] = useState(() => loadDraft(language));
   const [files, setFiles] = useState([]);
   const [sending, setSending] = useState(false);
@@ -95,7 +95,7 @@ export function OrderFormPanel({ embedded = false }) {
     setSending(true);
     try {
       const attachments = await Promise.all(files.map(fileToAttachment));
-      const order = createOrder({
+      const order = await createOrder({
         ...form,
         client_name: currentCustomer.display_name,
         client_phone: currentCustomer.phone,
@@ -120,8 +120,8 @@ export function OrderFormPanel({ embedded = false }) {
       <div className="mb-6 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="mb-3 flex flex-wrap gap-2">
-            <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-primary">{t('form.noRegistration')}</span>
-            <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">{t('form.demoWarning')}</span>
+            <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-primary">{isProduction ? t('account.myAccount') : t('form.noRegistration')}</span>
+            {!isProduction && <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">{t('form.demoWarning')}</span>}
           </div>
           <h2 className="font-heading text-3xl font-extrabold">{t('form.title')}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{t('form.subtitle')}</p>

@@ -3,8 +3,31 @@
   "type": "object",
   "properties": {
     "order_number": { "type": "string" },
-    "public_tracking_token": { "type": "string" },
-    "payment_token": { "type": "string" },
+    "public_tracking_token": {
+      "type": "string",
+      "rls": {
+        "read": {
+          "$or": [
+            { "data.user_id": "{{user.id}}" },
+            { "user_condition": { "role": "admin" } }
+          ]
+        },
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "payment_token": {
+      "type": "string",
+      "rls": {
+        "read": {
+          "$or": [
+            { "data.user_id": "{{user.id}}" },
+            { "user_condition": { "role": "admin" } }
+          ]
+        },
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "user_id": { "type": "string" },
     "customer_id": { "type": "string" },
     "service_type": {
       "type": "string",
@@ -21,9 +44,24 @@
     "preferred_schedule": { "type": "string" },
     "client_notes": { "type": "string" },
     "attachment_urls": { "type": "array", "items": { "type": "string" } },
-    "internal_notes": { "type": "string" },
+    "internal_notes": {
+      "type": "string",
+      "rls": {
+        "read": { "user_condition": { "role": "admin" } },
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
     "business_assignments": {
       "type": "array",
+      "rls": {
+        "read": {
+          "$or": [
+            { "user_condition": { "role": "admin" } },
+            { "user_condition": { "data.app_role": "courier" } }
+          ]
+        },
+        "write": { "user_condition": { "role": "admin" } }
+      },
       "items": {
         "type": "object",
         "properties": {
@@ -53,9 +91,32 @@
       "default": "sin_presupuestar"
     },
     "payment_method": { "type": "string", "enum": ["stripe", "bizum", "efectivo", "transferencia"] },
-    "payment_link": { "type": "string" },
-    "stripe_checkout_session_id": { "type": "string" },
-    "stripe_payment_intent_id": { "type": "string" },
+    "payment_link": {
+      "type": "string",
+      "rls": {
+        "read": {
+          "$or": [
+            { "data.user_id": "{{user.id}}" },
+            { "user_condition": { "role": "admin" } }
+          ]
+        },
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "stripe_checkout_session_id": {
+      "type": "string",
+      "rls": {
+        "read": { "user_condition": { "role": "admin" } },
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "rls": {
+        "read": { "user_condition": { "role": "admin" } },
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
     "paid_at": { "type": "string" },
     "status_history": {
       "type": "array",
@@ -69,5 +130,22 @@
       }
     }
   },
-  "required": ["service_type", "original_text", "delivery_address", "client_phone", "client_language"]
+  "required": ["service_type", "original_text", "delivery_address", "client_phone", "client_language"],
+  "rls": {
+    "create": { "user_condition": { "role": "admin" } },
+    "read": {
+      "$or": [
+        { "data.user_id": "{{user.id}}" },
+        { "user_condition": { "role": "admin" } },
+        {
+          "$and": [
+            { "data.assigned_delivery": "{{user.data.delivery_person_id}}" },
+            { "user_condition": { "data.app_role": "courier" } }
+          ]
+        }
+      ]
+    },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
 }

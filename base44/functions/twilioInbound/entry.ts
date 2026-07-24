@@ -4,13 +4,14 @@ import {
   normalizePhone,
   requireEnv,
   text,
-} from "../_shared/utils.ts";
+  whatsappEnabled,
+} from "./utils.ts";
 import {
   extractWhatsAppIntake,
   whatsappConfirmation,
   whatsappHandoff,
   whatsappQuestion,
-} from "../_shared/whatsappIntake.ts";
+} from "./whatsappIntake.ts";
 
 const escapeXml = (value: unknown) => String(value ?? "")
   .replaceAll("&", "&amp;")
@@ -29,6 +30,7 @@ const twiml = (body = "", status = 200) => {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return twiml("", 405);
+  if (!whatsappEnabled()) return twiml();
 
   try {
     const rawBody = await req.text();
@@ -80,19 +82,24 @@ Deno.serve(async (req) => {
     const existing = conversationMatches[0];
     const conversation = existing
       ? await service.entities.Conversation.update(existing.id, {
+          user_id: customer.user_id || existing.user_id,
           customer_id: customer.id,
           display_name: profileName || existing.display_name,
           unread_count: Number(existing.unread_count || 0) + 1,
+          admin_unread_count: Number(existing.admin_unread_count || 0) + 1,
           last_message_at: receivedAt,
           service_window_expires_at: windowExpires,
         })
       : await service.entities.Conversation.create({
+          user_id: customer.user_id,
           customer_id: customer.id,
           phone,
           display_name: profileName || customer.display_name,
           language: customer.language || "es",
           order_ids: [],
           unread_count: 1,
+          admin_unread_count: 1,
+          customer_unread_count: 0,
           last_message_at: receivedAt,
           service_window_expires_at: windowExpires,
           automation_enabled: true,
@@ -102,9 +109,13 @@ Deno.serve(async (req) => {
         });
 
     await service.entities.Message.create({
+      user_id: customer.user_id,
+      customer_id: customer.id,
       conversation_id: conversation.id,
       provider_sid: providerSid,
       direction: "inbound",
+      sender_type: "customer",
+      channel: "whatsapp",
       body: incomingBody || (mediaUrls.length ? "Archivo adjunto recibido." : ""),
       status: "received",
       media_urls: mediaUrls,
@@ -154,6 +165,7 @@ Deno.serve(async (req) => {
 
         const order = await service.entities.Order.create({
           order_number: orderNumber,
+          user_id: customer.user_id,
           customer_id: customer.id,
           service_type: intake.draft.service_type || "recados",
           original_text: originalText,
@@ -195,9 +207,13 @@ Deno.serve(async (req) => {
           last_intake_order_id: order.id,
         });
         await service.entities.Message.create({
+          user_id: customer.user_id,
+          customer_id: customer.id,
           conversation_id: conversation.id,
           order_id: order.id,
           direction: "system",
+          sender_type: "whatsapp_automation",
+          channel: "system",
           body: `Pedido #${orderNumber} creado automáticamente desde WhatsApp.`,
           status: "recorded",
           sent_at: receivedAt,
@@ -216,15 +232,24 @@ Deno.serve(async (req) => {
 
     if (reply) {
       await service.entities.Message.create({
+        user_id: customer.user_id,
+        customer_id: customer.id,
         conversation_id: conversation.id,
         order_id: replyOrderId,
         in_reply_to_sid: providerSid,
         direction: "outbound",
+        sender_type: "whatsapp_automation",
+        channel: "whatsapp",
         body: reply,
         status: "queued",
         sent_at: receivedAt,
         automation: true,
       });
+      if (conversation.user_id || customer.user_id) {
+        await service.entities.Conversation.update(conversation.id, {
+          customer_unread_count: Number(conversation.customer_unread_count || 0) + 1,
+        });
+      }
     }
 
     return twiml(reply);

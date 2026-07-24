@@ -1,11 +1,12 @@
 import { createClientFromRequest } from "npm:@base44/sdk";
 import twilio from "npm:twilio";
-import { requireEnv, text } from "../_shared/utils.ts";
+import { requireEnv, text, whatsappEnabled } from "./utils.ts";
 
 const empty = (status = 204) => new Response(null, { status, headers: { "Cache-Control": "no-store" } });
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return empty(405);
+  if (!whatsappEnabled()) return empty();
 
   try {
     const rawBody = await req.text();

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import LanguageSelector from '@/components/public/LanguageSelector';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDemoStore } from '@/lib/DemoStore';
+import { WHATSAPP_ENABLED } from '@/lib/features';
 
 export default function PublicHeader() {
   const { t } = useLanguage();
@@ -25,18 +26,18 @@ export default function PublicHeader() {
 
         <div className="order-2 flex flex-wrap items-center gap-2 sm:order-2 sm:flex-nowrap">
           <LanguageSelector />
-          <Link to={currentAccount ? '/mi-cuenta' : '/acceso'} className="flex-1 sm:flex-none">
+          <Link to={currentAccount ? currentAccount.role === 'admin' ? '/admin' : '/mi-cuenta' : '/acceso'} className="flex-1 sm:flex-none">
             <Button variant="outline" className="h-11 w-full rounded-full px-4 text-sm font-semibold">
               <UserRound className="h-4 w-4" />
               {currentAccount ? t('account.myAccount') : t('account.access')}
             </Button>
           </Link>
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
+          {WHATSAPP_ENABLED && <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
             <Button variant="outline" className="h-11 w-full rounded-full px-5 text-sm font-semibold">
               <MessageCircle className="w-4 h-4" />
               {t('header.whatsapp')}
             </Button>
-          </a>
+          </a>}
           <Link to="/#pedido" className="flex-1 sm:flex-none">
             <Button className="h-11 w-full rounded-full px-5 text-sm font-semibold shadow-sm">
               <Send className="w-4 h-4" />

@@ -11,7 +11,7 @@ const views = [
 
 export default function DemoNavigator() {
   const location = useLocation();
-  const { resetDemo } = useDemoStore();
+  const { resetDemo, isProduction } = useDemoStore();
   const [hidden, setHidden] = useState(false);
 
   if (import.meta.env.VITE_DEMO_MODE === 'false') return null;
@@ -27,6 +27,8 @@ export default function DemoNavigator() {
       </button>
     );
   }
+
+  if (isProduction) return null;
 
   return (
     <div className="fixed bottom-3 left-1/2 z-[80] flex w-[calc(100%-1rem)] max-w-lg -translate-x-1/2 items-center gap-1 rounded-2xl border border-white/10 bg-slate-950/95 p-1.5 text-white shadow-2xl backdrop-blur md:w-auto">

@@ -1,20 +1,44 @@
 {
-  "properties": {
-    "role": {
-      "type": "string",
-      "description": "The role of the user in the app",
-      "enum": [
-        "admin",
-        "courier",
-        "customer"
-      ]
-    },
-    "delivery_person_id": { "type": "string" },
-    "customer_id": { "type": "string" }
-  },
-  "required": [
-    "role"
-  ],
   "name": "User",
-  "type": "object"
+  "type": "object",
+  "properties": {
+    "app_role": {
+      "type": "string",
+      "description": "Rol funcional dentro de W Recados. Los administradores usan el campo role integrado de Base44.",
+      "enum": ["customer", "courier"],
+      "default": "customer",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "phone": {
+      "type": "string",
+      "description": "Teléfono normalizado del usuario",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "language": {
+      "type": "string",
+      "enum": ["es", "en", "de", "fr"],
+      "default": "es",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Perfil Customer asociado cuando app_role es customer",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    },
+    "delivery_person_id": {
+      "type": "string",
+      "description": "Perfil DeliveryPerson asociado cuando app_role es courier",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
+    }
+  }
 }

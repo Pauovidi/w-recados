@@ -2,7 +2,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import { DemoStoreProvider } from '@/lib/DemoStore';
+import { LocalStoreProvider } from '@/lib/DemoStore';
+import RealStoreProvider from '@/lib/RealStore';
 
 import Home from './pages/Home';
 import OrderForm from './pages/OrderForm';
@@ -53,12 +54,15 @@ const RoutedApp = () => {
 };
 
 function App() {
+  const StoreProvider = import.meta.env.VITE_DATA_PROVIDER === 'base44'
+    ? RealStoreProvider
+    : LocalStoreProvider;
   return (
-    <DemoStoreProvider>
+    <StoreProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <RoutedApp />
       </Router>
-    </DemoStoreProvider>
+    </StoreProvider>
   );
 }
 

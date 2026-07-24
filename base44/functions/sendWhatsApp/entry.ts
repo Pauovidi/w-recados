@@ -6,7 +6,8 @@ import {
   requireEnv,
   text,
   whatsappAddress,
-} from "../_shared/utils.ts";
+  whatsappEnabled,
+} from "./utils.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -14,6 +15,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     await requireAdmin(base44);
+    if (!whatsappEnabled()) {
+      return json({
+        error: "WhatsApp está temporalmente desactivado",
+        code: "WHATSAPP_DISABLED",
+      }, 503);
+    }
     const payload = await req.json();
     const conversationId = text(payload.conversation_id, 200);
     const body = text(payload.body, 4000);
@@ -59,16 +66,22 @@ Deno.serve(async (req) => {
 
     const sentAt = new Date().toISOString();
     const message = await service.entities.Message.create({
+      user_id: conversation.user_id,
+      customer_id: conversation.customer_id,
       conversation_id: conversation.id,
       order_id: text(payload.order_id, 200),
       provider_sid: result.sid,
       direction: "outbound",
+      sender_type: "admin",
+      channel: "whatsapp",
       body: body || `Plantilla ${contentSid}`,
       status: result.status || "queued",
       sent_at: sentAt,
     });
     await service.entities.Conversation.update(conversation.id, {
       unread_count: 0,
+      admin_unread_count: 0,
+      customer_unread_count: Number(conversation.customer_unread_count || 0) + 1,
       last_message_at: sentAt,
     });
 

@@ -17,6 +17,7 @@ import PublicFooter from '@/components/public/PublicFooter';
 import ServiceCard from '@/components/public/ServiceCard';
 import { useLanguage } from '@/hooks/useLanguage';
 import { OrderFormPanel } from '@/pages/OrderForm';
+import { WHATSAPP_ENABLED } from '@/lib/features';
 
 const serviceIcons = {
   supermercado: ShoppingCart,
@@ -54,12 +55,12 @@ export default function Home() {
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </a>
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              {WHATSAPP_ENABLED && <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline" className="h-14 rounded-full border-white/20 bg-transparent px-8 text-base font-semibold text-white hover:bg-white/10 hover:text-white">
                   <MessageCircle className="w-4 h-4" />
                   {t('home.secondaryCta')}
                 </Button>
-              </a>
+              </a>}
             </div>
           </div>
 

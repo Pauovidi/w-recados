@@ -1,6 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk";
 import Stripe from "npm:stripe";
-import { appendStatus, json, requireEnv } from "../_shared/utils.ts";
+import { appendStatus, json, requireEnv } from "./utils.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -48,17 +48,26 @@ Deno.serve(async (req) => {
       status_history: appendStatus(order, "confirmado", "Stripe"),
     });
 
-    const conversations = await service.entities.Conversation.filter({ phone: order.client_phone }, "-created_date", 1);
+    const conversations = order.customer_id
+      ? await service.entities.Conversation.filter({ customer_id: order.customer_id }, "-created_date", 1)
+      : await service.entities.Conversation.filter({ phone: order.client_phone }, "-created_date", 1);
     if (conversations[0]) {
       await service.entities.Message.create({
+        user_id: order.user_id || conversations[0].user_id,
+        customer_id: order.customer_id || conversations[0].customer_id,
         conversation_id: conversations[0].id,
         order_id: order.id,
         direction: "system",
+        sender_type: "system",
+        channel: "system",
         body: `Pago del pedido #${order.order_number} confirmado por Stripe.`,
         status: "recorded",
         sent_at: paidAt,
       });
-      await service.entities.Conversation.update(conversations[0].id, { last_message_at: paidAt });
+      await service.entities.Conversation.update(conversations[0].id, {
+        customer_unread_count: Number(conversations[0].customer_unread_count || 0) + 1,
+        last_message_at: paidAt,
+      });
     }
 
     return json({ received: true });
