@@ -39,9 +39,6 @@ export default function Home() {
       <section className="bg-foreground pb-28 text-background md:pb-36">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-[1.15fr_0.85fr] md:py-20">
           <div className="flex flex-col justify-center">
-            <div className="mb-5 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-medium text-white/80">
-              {t('home.heroBadge')}
-            </div>
             <h1 className="max-w-3xl font-heading text-4xl font-extrabold leading-tight md:text-6xl">
               {t('home.heroTitle')}
             </h1>
