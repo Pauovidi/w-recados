@@ -38,12 +38,12 @@ export default function PublicHeader() {
               {t('header.whatsapp')}
             </Button>
           </a>}
-          <Link to="/#pedido" className="flex-1 sm:flex-none">
+          <a href="/#pedido" className="flex-1 sm:flex-none">
             <Button className="h-11 w-full rounded-full px-5 text-sm font-semibold shadow-sm">
               <Send className="w-4 h-4" />
               {t('header.order')}
             </Button>
-          </Link>
+          </a>
         </div>
       </div>
     </header>

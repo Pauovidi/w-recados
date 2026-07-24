@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ArrowRight,
   Clock,
@@ -31,6 +31,11 @@ export default function Home() {
   const { dictionary, t } = useLanguage();
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_PHONE || '34600000000';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(t('header.whatsappPrefill'))}`;
+
+  useEffect(() => {
+    if (window.location.hash !== '#pedido') return;
+    document.getElementById('pedido')?.scrollIntoView({ block: 'start' });
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

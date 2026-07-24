@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import {
   Check, Clock3, CreditCard, LogOut, MessageCircle, PackageCheck, Plus,
   ReceiptText, Send, Truck, UserRound,
@@ -84,7 +84,7 @@ export default function ClientArea() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button asChild className="rounded-full"><Link to="/#pedido"><Plus className="h-4 w-4" /> {t('account.newOrder')}</Link></Button>
+              <Button asChild className="rounded-full"><a href="/#pedido"><Plus className="h-4 w-4" /> {t('account.newOrder')}</a></Button>
               <Button variant="outline" onClick={logoutClient} className="rounded-full border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"><LogOut className="h-4 w-4" /> {t('account.logout')}</Button>
             </div>
           </section>
